@@ -1,0 +1,56 @@
+package main
+
+import "fmt"
+
+type Network struct {
+	nodes [][]Node
+	numConnections int
+	numNodes int
+	innovation []int
+	id int
+}
+
+func (n *Network) GetInstance(input int, output int) {
+	n.numConnections = 0
+	n.numNodes = 0
+
+	n.nodes = make([][]Node, 3)
+
+	n.nodes[0] = make([]Node, input);
+	n.nodes[2] = make([]Node, output);
+
+	fmt.Print("initialized")
+
+	//creates the nodes and adds them to the network
+	for i := 0; i < input; i++ {
+		n.nodes[0][i] = Node {value:0, id:n.id, send:make([]Connection, output)}
+
+		//creates the connections
+		for a := 0; a < output; a++ {
+			n.nodes[0][i].send[a] = Connection{weight: 1, disable:false, sendValue:&n.nodes[0][i].value}
+			n.numConnections++;
+		}
+
+		n.id++;
+	}
+
+	fmt.Print("input")
+
+	for i := 0; i < output; i++ {
+		n.nodes[2][i] = Node {value:0, id:n.id, receive:make([]*Connection, input)}
+		n.id++;
+	}
+
+	fmt.Print("output")
+
+	//populates output recieve
+	for i := 0; i < output; i++ {
+		for a := 0; a < input; a++ {
+			n.nodes[2][i].receive[a] = &n.nodes[0][a].send[i]
+		}
+	}
+
+	fmt.Print("recieving connection")
+
+	n.numNodes = input+output;
+}
