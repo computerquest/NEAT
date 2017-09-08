@@ -10,6 +10,24 @@ type Network struct {
 	id int
 }
 
+func (n *Network) process(input []float64) {
+	for i := 0; i < len(n.nodes[0]); i++ {
+		n.nodes[0][i].value = input[i];
+	}
+
+	for i := 1; i < len(n.nodes); i++ {
+		for a := 0; a < len(n.nodes[i]); a++ {
+			n.nodes[i][a].value = sigmoid(n.nodes[i][a].netInput())
+		}
+	}
+}
+
+//todo needs to be finished
+func sigmoid(value float64) float64 {
+	return 0;
+}
+
+//todo need to be tested
 func (n *Network) GetInstance(input int, output int) {
 	n.numConnections = 0
 	n.numNodes = 0
