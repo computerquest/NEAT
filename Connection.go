@@ -2,10 +2,16 @@ package main
 
 type Connection struct{
 	weight float64
-	//sendValue *float64
 	disable bool
 	nextWeight float64
-	//connectInfluence *float64
-	idTo int
-	idFrom int
+	nodeTo *Node
+	nodeFrom *Node
+}
+
+func (c *Connection) notifyValue() {
+	c.nodeTo.recieveValue()
+}
+
+func (c *Connection) notifyInfluence() {
+	c.nodeFrom.recieveInfluence()
 }
