@@ -5,6 +5,7 @@ type Node struct {
 	id int
 	receive []*Connection
 	send []Connection //this list is seqential for initialization
+	influence float64
 }
 
 func (n Node) netInput() float64 {

@@ -1,16 +1,21 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 type Network struct {
-	nodes [][]Node
+	nodes [][]*Node // this is used for the backprop and processing
+	nodeList []Node //this is used primarily for connections and mating
 	numConnections int
 	numNodes int
 	innovation []int
 	id int
+	learningRate float64
 }
 
-func (n *Network) process(input []float64) {
+func (n *Network) Process(input []float64) {
 	for i := 0; i < len(n.nodes[0]); i++ {
 		n.nodes[0][i].value = input[i];
 	}
@@ -22,44 +27,91 @@ func (n *Network) process(input []float64) {
 	}
 }
 
-//todo needs to be finished
-func sigmoid(value float64) float64 {
-	return 0;
+//todo test
+func (n *Network) BackProp(input []float64, desired []float64) {
+	n.Process(input)
+
+	//backprop output and hidden
+	for z := 2; z >= 1; z++ {
+		for i := 0; i < len(n.nodes[z]); i++ {
+			node := n.nodes[z][i]
+
+			node.influence = 0
+			derivative := sigmoidDerivative(node.value)
+
+			if z < 2 {
+				for a := 0; a < len(node.receive); a++ {
+					node.influence += (*node.receive[a].connectInfluence) * (node.receive[a].weight)
+				}
+			} else {
+				node.influence = node.value-desired[i]
+			}
+
+			for a := 0; a < len(node.receive); a++ {
+				node.receive[a].nextWeight += derivative * (*node.receive[a].sendValue) * node.influence * n.learningRate
+			}
+		}
+	}
 }
 
-//todo need to be tested
+func (n *Network) addConnection(from int, to int) {
+	n.nodeList[from].send = append(n.nodeList[from].send,  Connection{weight: 1, disable:false, sendValue:&n.nodeList[from].value, connectInfluence:&n.nodeList[to].influence})
+	n.nodeList[to].receive = append(n.nodeList[to].receive, &n.nodeList[from].send[len( n.nodeList[from].send)-1])
+
+}
+
+func (n *Network) addNode(from int, to int) {
+
+}
+
+func sigmoid(value float64) float64 {
+	return 1 / (1 + (1/math.Pow(2.71, value)))
+}
+
+func sigmoidDerivative(value float64) float64 {
+	return sigmoid(value)*(1 - sigmoid(value))
+}
+
 func (n *Network) GetInstance(input int, output int) {
+	n.learningRate = .1
+	count := 0
 	n.numConnections = 0
 	n.numNodes = 0
 
-	n.nodes = make([][]Node, 3)
+	n.nodeList = make([]Node, (input+output)*2)
+	n.nodes = make([][]*Node, 3)
 
-	n.nodes[0] = make([]Node, input);
-	n.nodes[2] = make([]Node, output);
+	n.nodes[0] = make([]*Node, input);
+	n.nodes[2] = make([]*Node, output);
 
 	fmt.Print("initialized")
 
+	for i := 0; i < output; i++ {
+		n.nodeList[count] = Node {value:0, id:n.id, receive:make([]*Connection, input)}
+		n.nodes[2][i] = &n.nodeList[count]
+		count++
+		n.id++
+	}
+	fmt.Print("output")
+
 	//creates the nodes and adds them to the network
 	for i := 0; i < input; i++ {
-		n.nodes[0][i] = Node {value:0, id:n.id, send:make([]Connection, output)}
+		n.nodeList[count] = Node {value:0, id:n.id, send:make([]Connection, output)}
+		n.nodes[0][i] = &n.nodeList[count]
 
 		//creates the connections
 		for a := 0; a < output; a++ {
-			n.nodes[0][i].send[a] = Connection{weight: 1, disable:false, sendValue:&n.nodes[0][i].value}
+			n.nodes[0][i].send[a] = Connection{weight: 1, disable:false, sendValue:&n.nodes[0][i].value, connectInfluence:&n.nodes[2][a].influence}
 			n.numConnections++;
 		}
 
-		n.id++;
+		n.id++
+		count++
 	}
-
 	fmt.Print("input")
 
-	for i := 0; i < output; i++ {
-		n.nodes[2][i] = Node {value:0, id:n.id, receive:make([]*Connection, input)}
-		n.id++;
-	}
 
-	fmt.Print("output")
+
 
 	//populates output recieve
 	for i := 0; i < output; i++ {
@@ -70,5 +122,5 @@ func (n *Network) GetInstance(input int, output int) {
 
 	fmt.Print("recieving connection")
 
-	n.numNodes = input+output;
+	n.numNodes = input+output
 }
