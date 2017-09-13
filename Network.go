@@ -7,17 +7,17 @@ import (
 //NOTE most of the calculating work is networked by nodes inside the struct
 
 type Network struct {
-	nodeList []Node
+	nodeList []Node //master list of nodes
 	numConnections int
 	numNodes int
-	innovation []int
-	id int
-	learningRate float64
-	output []*Node
-	input []*Node
+	innovation []int //list of inovation numbers this network has
+	id int //network id
+	learningRate float64 //learning rate for backprop
+	output []*Node //output nodes
+	input []*Node //input nodes
 }
 
-
+//processes the network
 func (n *Network) Process(input []float64) {
 	for i := 0; i < len(n.input); i++ {
 		n.input[i].setValue(input[i])
@@ -25,14 +25,16 @@ func (n *Network) Process(input []float64) {
 }
 
 //todo test when time
+//backpropogates the network to desired one time
 func (n *Network) BackProp(input []float64, desired []float64) {
-	n.Process(input)
+	n.Process(input) //need to do so that you are performing the algorithm on that set of values
 
 	//this will calc all the influence
 	for i := 0; i < len(n.output); i++ {
 		n.output[i].setInfluence(n.output[i].value-desired[i])
 	}
 
+	//actually adjusts the weights
 	for i := 0; i < len(n.nodeList); i++ {
 		derivative := sigmoidDerivative(n.nodeList[i].value)
 		for a := 0; a < len(n.nodeList[i].receive); a++ {
@@ -75,6 +77,7 @@ func (n *Network) addNode(from int, to int) {
 
 //todo need to make sure doing the right connections
 func (n *Network) GetInstance(input int, output int) {
+	//set all default values
 	n.learningRate = .1
 	count := 0
 	n.numConnections = 0
@@ -86,6 +89,7 @@ func (n *Network) GetInstance(input int, output int) {
 
 	fmt.Print("initialized")
 
+	//create output nodes
 	for i := 0; i < output; i++ {
 		n.nodeList[count] = Node {value:0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, input)}
 		n.output[i] = &n.nodeList[count]
@@ -94,7 +98,7 @@ func (n *Network) GetInstance(input int, output int) {
 	}
 	fmt.Print("output")
 
-	//creates the nodes and adds them to the network
+	//creates the input nodes and adds them to the network
 	for i := 0; i < input; i++ {
 		n.nodeList[count] = Node {value:0, id:n.id, influenceRecieved: 0, inputRecieved: 0, send:make([]Connection, output)}
 		n.input[i] = &n.nodeList[count]

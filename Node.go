@@ -5,14 +5,15 @@ import "math"
 type Node struct {
 	value float64
 	id int
-	receive []*Connection
-	send []Connection //this list is seqential for initialization
-	influence float64
-	inputRecieved int
-	influenceRecieved int
+	receive []*Connection //connections to this node
+	send []Connection //connections sent from this node
+	influence float64 //this nodes influence (used for backprop)
+	inputRecieved int //number of connections that have responded with input values
+	influenceRecieved int //number of connections that have responded with influence values
 	//activation bool //used to signal input nodes don't need activation but might not need
 }
 
+//calculate input to this node
 func (n Node) netInput() float64 {
 	var sum float64 = 0
 	for i := 0; i < len(n.receive); i++ {
@@ -25,6 +26,7 @@ func (n Node) netInput() float64 {
 	return sum
 }
 
+//called when connection recieves a input value
 func (n *Node) recieveValue() {
 	n.inputRecieved++
 
@@ -34,6 +36,7 @@ func (n *Node) recieveValue() {
 	}
 }
 
+//called when connection recieves an influence value
 func (n *Node) recieveInfluence() {
 	n.influenceRecieved++
 
@@ -62,12 +65,14 @@ func (n *Node) setInfluence(i float64) {
 	n.signalInfluence()
 }
 
+//notifies all connections that the value has been calculated
 func (n *Node) signalValue() {
 	for i := 0; i < len(n.send); i++ {
 		n.send[i].notifyValue()
 	}
 }
 
+//notifies all connections that the influence has been calculated
 func (n *Node) signalInfluence() {
 	for i := 0; i < len(n.receive); i++ {
 		n.receive[i].notifyInfluence()

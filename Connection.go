@@ -8,6 +8,7 @@ type Connection struct{
 	nodeFrom *Node
 }
 
+//these act as the middle man between nodes
 func (c *Connection) notifyValue() {
 	c.nodeTo.recieveValue()
 }
