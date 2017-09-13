@@ -65,16 +65,58 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 }
 
 //todo test
-func (n *Network) addConnection(from int, to int) {
-	n.nodeList[from].send = append(n.nodeList[from].send,   Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: &n.nodeList[from], nodeTo: &n.nodeList[to]})
-	n.nodeList[to].receive = append(n.nodeList[to].receive, &n.nodeList[from].send[len( n.nodeList[from].send)-1])
+func (n *Network) mutateConnection(from int, to int) {
+	if len(n.nodeList[from].send) >= cap(n.nodeList[from].send ) {
+		n.nodeList[from].send = append(n.nodeList[from].send, Connection{weight: 1, nextWeight: 0, disable: false, nodeFrom: &n.nodeList[from], nodeTo: &n.nodeList[to]})
+	} else {
+		n.nodeList[from].send[len(n.nodeList[from].send)-1] = Connection{weight: 1, nextWeight: 0, disable: false, nodeFrom: &n.nodeList[from], nodeTo: &n.nodeList[to]}
+	}
+
+	if len(n.nodeList[to].receive) >= cap(n.nodeList[to].receive) {
+		n.nodeList[to].receive = append(n.nodeList[to].receive,  &n.nodeList[from].send[len( n.nodeList[from].send)-1])
+	} else {
+		n.nodeList[to].receive[len(n.nodeList[to].receive)-1] =  &n.nodeList[from].send[len( n.nodeList[from].send)-1]
+	}
 }
 
-//todo finish
-func (n *Network) addNode(from int, to int) {
+//todo test
+/*
+change from nodes connection to one with new node
+change to nodes pointer to one sent by by new node
+ */
+func (n *Network) mutateNode(from int, to int) {
+	fromNode := &n.nodeList[from]
+	toNode := &n.nodeList[to]
+	newNode := &n.nodeList[n.createNode().id]
 
+	//creates and modfies the connection to the toNode
+	for i := 0; i < len(toNode.receive); i++ {
+		if fromNode == toNode.receive[i].nodeFrom { //compares the memory location
+			newNode.send[0] = Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: newNode, nodeTo:toNode}
+			toNode.receive[i] = &newNode.send[0]
+		}
+	}
+
+	for i := 0; i < len(fromNode.send); i++ {
+		if fromNode.send[i].nodeTo == toNode {
+			fromNode.send[i].nodeTo = newNode
+			newNode.receive[0] = &fromNode.send[i]
+		}
+	}
 }
 
+func (n *Network) createNode() Node {
+	node := Node {value:0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, len(n.input)), send:make([]Connection, len(n.output))}
+	n.id++
+
+	if len(n.nodeList) >= cap(n.nodeList) {
+		n.nodeList = append(n.nodeList,  node)
+	} else {
+		n.nodeList[len(n.nodeList)-1] =  node
+	}
+
+	return node
+}
 //todo need to make sure doing the right connections
 func (n *Network) GetInstance(input int, output int) {
 	//set all default values
