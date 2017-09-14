@@ -10,3 +10,12 @@ type Neat struct {
 	network [][]Network //stores networks in species
 	connectionInnovation [][]int //stores innovation number and connection to and from ex: 1, fromNode:2, toNode: 5
 }
+
+func getNeatInstance(numSpeices int, nps int) Neat {
+	n := Neat{species: numSpeices, nps: nps, network: make([][]Network, numSpeices)}
+	for i := 0; i < len(n.network); i++ {
+		n.network[i] = make([]Network, nps)
+	}
+
+	return n
+}

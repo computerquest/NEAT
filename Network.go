@@ -118,7 +118,8 @@ func (n *Network) createNode() Node {
 	return node
 }
 //todo need to make sure doing the right connections
-func (n *Network) GetInstance(input int, output int) {
+func GetNetworkInstance(input int, output int) Network {
+	n := Network{}
 	//set all default values
 	n.learningRate = .1
 	count := 0
@@ -156,4 +157,6 @@ func (n *Network) GetInstance(input int, output int) {
 		count++
 	}
 	fmt.Print("input")
+
+	return n
 }
