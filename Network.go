@@ -79,12 +79,19 @@ func (n *Network) mutateConnection(from int, to int) {
 	}
 }
 
+func (n *Network) addInnovation(num int) {
+	if len(n.innovation) >= cap(n.innovation) {
+		n.innovation = append(n.innovation,  num)
+	} else {
+		n.innovation[len(n.innovation)] =  num
+	}
+}
 //todo test
 /*
 change from nodes connection to one with new node
 change to nodes pointer to one sent by by new node
  */
-func (n *Network) mutateNode(from int, to int) {
+func (n *Network) mutateNode(from int, to int) int {
 	fromNode := &n.nodeList[from]
 	toNode := &n.nodeList[to]
 	newNode := &n.nodeList[n.createNode().id]
@@ -97,12 +104,15 @@ func (n *Network) mutateNode(from int, to int) {
 		}
 	}
 
+	//todo find a better way?
 	for i := 0; i < len(fromNode.send); i++ {
 		if fromNode.send[i].nodeTo == toNode {
 			fromNode.send[i].nodeTo = newNode
 			newNode.receive[0] = &fromNode.send[i]
 		}
 	}
+
+	return newNode.id
 }
 
 func (n *Network) createNode() Node {
@@ -117,7 +127,7 @@ func (n *Network) createNode() Node {
 
 	return node
 }
-//todo need to make sure doing the right connections
+
 func GetNetworkInstance(input int, output int) Network {
 	n := Network{}
 	//set all default values
