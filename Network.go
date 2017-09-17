@@ -10,7 +10,7 @@ type Network struct {
 	nodeList []Node //master list of nodes
 	numConnections int
 	numNodes int
-	innovation []int //list of inovation numbers this network has
+	innovation []int //list of inovation numbers this network has (SORTED)
 	id int //network id
 	learningRate float64 //learning rate for backprop
 	output []*Node //output nodes
