@@ -15,6 +15,8 @@ type Network struct {
 	learningRate float64 //learning rate for backprop
 	output []*Node //output nodes
 	input []*Node //input nodes
+	fitness float64
+	adjustedFitness float64
 }
 
 //processes the network

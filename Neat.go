@@ -179,3 +179,15 @@ func (n *Neat) mutateNetwork(network *Network) {
 		network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))))
 	}
 }
+
+func (n *Neat) adjustFitness() {
+	for i := 0; i < len(n.network); i++ {
+		for a := 0; a < len(n.network[i]); a++ {
+			n.network[i][a].adjustedFitness = n.network[i][a].fitness/float64(len(n.network[i]))
+		}
+	}
+}
+
+func (n *Neat) mateNetwork() {
+
+}
