@@ -10,23 +10,22 @@ import (
 not going to speciate until after a couple of rounds
  */
 
-//todo finish
 type Neat struct {
-	species              int         //number of species desired
-	nps                  int         //networks per species
+	//species              int         //number of species desired
+	//nps                  int         //networks per species
 	connectMutate        float64     //odds for connection mutation
 	nodeMutate           float64     //odds for node mutation
 	innovation           int         //number of innovations
-	network              [][]Network //stores networks in species
+	network              []Network //stores networks in species
 	connectionInnovation [][]int     //stores innovation number and connection to and from ex: 1, fromNode:2, toNode: 5
+	speciesThreshold float64 //could adjust based upon average difference between networks
+	networkId int
 }
 
-func GetNeatInstance(numSpeices int, nps int) Neat {
-	n := Neat{species: numSpeices, nps: nps, innovation: 0, connectMutate: .7,
-		nodeMutate: .3, network: make([][]Network, numSpeices), connectionInnovation: make([][]int, 10)}
-	for i := 0; i < len(n.network); i++ {
-		n.network[i] = make([]Network, nps)
-	}
+//todo finish
+func GetNeatInstance(numNetworks int) Neat {
+	n := Neat{innovation: 0, connectMutate: .7,
+		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10)}
 
 	for i := 0; i < len(n.connectionInnovation); i++ {
 		n.connectionInnovation[i] = make([]int, 2)
@@ -40,7 +39,7 @@ func GetNeatInstance(numSpeices int, nps int) Neat {
 	return n
 }
 
-//todo test and simplify
+//rewrite
 /*
 are you comparing every network to every other or are you comparing random geneomes (collection of genes) from last generation of species to each network
  */

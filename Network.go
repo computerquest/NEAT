@@ -130,17 +130,10 @@ func (n *Network) createNode() Node {
 	return node
 }
 
-func GetNetworkInstance(input int, output int) Network {
-	n := Network{}
-	//set all default values
-	n.learningRate = .1
-	count := 0
-	n.numConnections = 0
-	n.numNodes = input+output
+func GetNetworkInstance(input int, output int, id int) Network {
+	n := Network{id: id, learningRate: .1, numConnections:0, numNodes:input+output, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
 
-	n.nodeList = make([]Node, (input+output)*2)
-	n.output = make([]*Node, output)
-	n.input = make([]*Node, input)
+	count := 0
 
 	fmt.Print("initialized")
 
