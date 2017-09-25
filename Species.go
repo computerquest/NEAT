@@ -1,6 +1,8 @@
 package main
 
-import "sort"
+import (
+	"sort"
+)
 
 type Species struct {
 	network             []*Network
@@ -11,7 +13,7 @@ type Species struct {
 }
 
 func GetSpeciesInstance(maxInnovation int, networks []*Network) Species {
-	s := Species{network: make([]*Network, cap(networks)), connectionInnovaton: make([]int, int(maxInnovation*1.25)), commonNodes: 0, nodeCount: 0,}
+	s := Species{network: make([]*Network, cap(networks)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0}
 
 	//doing this so slice passed is not kept in memory
 	for i := 0; i < len(s.network); i++ {
@@ -55,7 +57,7 @@ func (s *Species) updateStereotype() {
 
 	count := 0
 	for i := 0; i < len(s.connectionInnovaton); i++ {
-		if s.connectionInnovaton[i]/len(s.network) > .6 {
+		if float64(s.connectionInnovaton[i]/len(s.network)) > .6 {
 			s.commonConnection[count] = s.connectionInnovaton[i]
 		}
 	}
@@ -64,15 +66,37 @@ func (s *Species) updateStereotype() {
 	s.commonNodes = int(numNodes / len(s.network))
 }
 
-//todo finish
 //used as a wrapper to mutate networks
 //will allow to monitor and change the stereotype dynamically without all the loops and access will need the same for mating
-func (s *Species) mutateNetwork() {
-
+func (s *Species) mutateNetwork(innovate int) {
+	if len(s.connectionInnovaton) < innovate {
+		s.connectionInnovaton[innovate]++
+	} else {
+		s.connectionInnovaton = append(s.connectionInnovaton)
+		s.connectionInnovaton[innovate]++
+	}
 }
 
 func (s *Species) sortInnovation() {
 	for i := 0; i < len(s.network); i++ {
 		sort.Ints(s.network[i].innovation)
 	}
+}
+
+func (s *Species) addNetwork(n *Network) {
+	if len(s.network) > cap(s.network) {
+		s.network = append(s.network, n)
+	}
+}
+
+//might be able to do by id
+func (s *Species) removeNetwork(n *Network) {
+	index := 0
+	for i := 0; i < len(s.network); i++ {
+		if s.network[i].id == n.id {
+			index = i
+		}
+	}
+
+	s.network = append(s.network[:index], s.network[index:]...)
 }

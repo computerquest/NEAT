@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 	"sort"
+	"math"
 )
 
 /*
@@ -13,15 +14,17 @@ not going to speciate until after a couple of rounds
 type Neat struct {
 	//species              int         //number of species desired
 	//nps                  int         //networks per species
-	connectMutate        float64     //odds for connection mutation
-	nodeMutate           float64     //odds for node mutation
-	innovation           int         //number of innovations
+	connectMutate        float64   //odds for connection mutation
+	nodeMutate           float64   //odds for node mutation
+	innovation           int       //number of innovations
 	network              []Network //stores networks in species
-	connectionInnovation [][]int     //stores innovation number and connection to and from ex: 1, fromNode:2, toNode: 5
-	speciesThreshold float64 //could adjust based upon average difference between networks
-	networkId int
+	connectionInnovation [][]int   //stores innovation number and connection to and from ex: 1, fromNode:2, toNode: 5
+	speciesThreshold     float64   //could adjust based upon average difference between networks
+	networkId            int
+	species              []Species
 }
 
+//todo fix id system
 //todo finish
 func GetNeatInstance(numNetworks int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7,
@@ -32,6 +35,7 @@ func GetNeatInstance(numNetworks int) Neat {
 	}
 
 	/*REST OF METHOD
+	create species
 	perform initial mutations
 		between 1-3 for each network
 	speciate
@@ -48,8 +52,11 @@ could improve the results by:
 creating a custom rep network that generalizes the species (a stereotype if you will)
 pay greater attention to the speciation comparisons and compare values later in case of dispute
  */
-func (n *Neat) speciate() {
-	repNetworks := make([]*Network, n.species)
+//todo need plan for creating a new species and rearranging species
+//todo need a plan for starting a new species
+//todo finish
+func (n *Neat) speciate(network *Network) {
+	/*repNetworks := make([]*Network, n.species)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0; i < len(n.network); i++ {
@@ -99,94 +106,165 @@ func (n *Neat) speciate() {
 
 			newNet[index][len(newNet[index])-1] = n.network[i][a]
 		}
+	}*/
+	values := make([]float64, len(n.species))
+
+	for i := 0; i < len(n.species); i++ {
+		if len(n.species[i].connectionInnovaton) > len(network.innovation) {
+			values[i] = compareGenome(network.numNodes, network.innovation, n.species[i].commonNodes, n.species[i].commonConnection)
+		} else {
+			values[i] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, network.numNodes, network.innovation)
+		}
+	}
+
+	//this should be faster than sorting the whole thing (it also retains position information)
+	var index int
+	lValue := 1000.0
+	for i := 0; i < len(values); i++ {
+		if values[i] < lValue {
+			index = i
+			lValue = values[i]
+		}
+	}
+
+	if lValue < n.speciesThreshold {
+
+	} else {
+
+	}
+}
+
+//recieves input in order shortest to longest
+func compareGenome(node int, innovation []int, nodeA int, innovationA []int) float64 {
+	missing := 0
+	for b := 0; b < len(innovation); b++ {
+		ans := sort.SearchInts(innovationA, innovation[b])
+
+		//todo verify default return value
+		if ans == len(innovationA) {
+			missing++
+		}
+	}
+
+	return float64((missing + int(math.Abs(float64(node-nodeA)))) / (len(innovationA) + int((node+nodeA)/2)))
+}
+
+//todo finalize protocol for same species
+func (n *Neat) checkSpecies() {
+	for i := 0; i < len(n.species); i++ {
+		values := make([]float64, len(n.species))
+		for a := 0; a < len(n.species); a++ {
+			if a == i {
+				continue
+			}
+
+			if len(n.species[i].commonConnection) < len(n.species[a].commonConnection) {
+				values[a] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, n.species[a].commonNodes, n.species[a].commonConnection)
+			} else {
+				values[a] = compareGenome(n.species[a].commonNodes, n.species[a].commonConnection, n.species[i].commonNodes, n.species[i].commonConnection)
+			}
+		}
+
+		index := 0
+		lValue := 1000.0
+		for i := 0; i < len(values); i++ {
+			if values[i] < lValue {
+				index = i
+				lValue = values[i]
+			}
+		}
+
+		if lValue > n.speciesThreshold {
+			currentSpecies := n.species[i].network
+			n.species = append(n.species[:i], n.species[(i+1):]...)
+			for a := 0; a < len(currentSpecies); a++ {
+				n.speciate(currentSpecies[a])
+			}
+		}
 	}
 }
 
 //todo test
-func (n *Neat) mutateNetwork(network *Network) {
+//TODO make sure that i am not adding connections twice
+func (n *Neat) mutateNetwork() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < int(r.Int63n(int64(len(n.network)))/5); i++ {
+		species := int(r.Int63n(int64(len(n.species))))
+		network := n.species[species].network[r.Int63n(int64(len(n.species[species].network)))]
 
-	nodeRange := network.numNodes
+		nodeRange := network.numNodes
 
-	//todo test
-	addConnectionInnovation := func(numTo int, numFrom int) int {
-		ans := n.innovation
-		if len(n.connectionInnovation) >= cap(n.connectionInnovation) {
-			newStuff := []int{numFrom, numTo}
-			n.connectionInnovation = append(n.connectionInnovation, newStuff)
-		} else {
-			n.connectionInnovation[n.innovation][0] = numFrom
-			n.connectionInnovation[n.innovation][1] = numTo
-		}
-
-		network.addInnovation(ans)
-
-		n.innovation++
-
-		return ans
-	}
-
-	nodeMutate := func() {
-		var firstNode int
-		var secondNode int
-		ans := false
-
-		//todo find a better way to check (for both statements)
-		for !ans {
-			firstNode = int(r.Int63n(int64(nodeRange + 1)))
-			secondNode = int(r.Int63n(int64(nodeRange + 1)))
-
-			for i := 0; i < len(n.connectionInnovation); i++ {
-				if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode {
-					ans = true
-				}
+		//todo test
+		addConnectionInnovation := func(numTo int, numFrom int) int {
+			ans := n.innovation
+			if len(n.connectionInnovation) >= cap(n.connectionInnovation) {
+				newStuff := []int{numFrom, numTo}
+				n.connectionInnovation = append(n.connectionInnovation, newStuff)
+			} else {
+				n.connectionInnovation[n.innovation][0] = numFrom
+				n.connectionInnovation[n.innovation][1] = numTo
 			}
+
+			network.addInnovation(ans)
+
+			n.species[species].mutateNetwork(ans)
+
+			n.innovation++
+
+			return ans
 		}
 
-		network.mutateNode(firstNode, secondNode)
+		nodeMutate := func() {
+			var firstNode int
+			var secondNode int
+			ans := false
 
-		addConnectionInnovation(firstNode, secondNode)
-	}
-	//todo fix the casting
-	if r.Float64() <= n.nodeMutate {
-		nodeMutate()
-	} else {
-		var firstNode int
-		var secondNode int
-		ans := false
-		attempts := 0
-		for !ans && attempts <= 5 {
-			firstNode = int(r.Int63n(int64(nodeRange + 1)))
-			secondNode = int(r.Int63n(int64(nodeRange + 1)))
+			//todo find a better way to check (for both statements)
+			for !ans {
+				firstNode = int(r.Int63n(int64(nodeRange + 1)))
+				secondNode = int(r.Int63n(int64(nodeRange + 1)))
 
-			ans = true
-			for i := 0; i < len(n.connectionInnovation); i++ {
-				if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode {
-					ans = false
+				for i := 0; i < len(n.connectionInnovation); i++ {
+					if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode {
+						ans = true
+					}
 				}
 			}
 
-			attempts++
-		}
+			network.mutateNode(firstNode, secondNode)
+			n.species[species].nodeCount++
 
-		if (attempts > 5) {
+			addConnectionInnovation(firstNode, secondNode)
+		}
+		//todo fix the casting
+		if r.Float64() <= n.nodeMutate {
 			nodeMutate()
+		} else {
+			var firstNode int
+			var secondNode int
+			ans := false
+			attempts := 0
+			for !ans && attempts <= 5 {
+				firstNode = int(r.Int63n(int64(nodeRange + 1)))
+				secondNode = int(r.Int63n(int64(nodeRange + 1)))
+
+				ans = true
+				for i := 0; i < len(n.connectionInnovation); i++ {
+					if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode {
+						ans = false
+					}
+				}
+
+				attempts++
+			}
+
+			if (attempts > 5) {
+				nodeMutate()
+			}
+
+			addConnectionInnovation(firstNode, secondNode)
+
+			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))))
 		}
-
-		addConnectionInnovation(firstNode, secondNode)
-
-		network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))))
 	}
-}
-
-func (n *Neat) adjustFitness() {
-	for i := 0; i < len(n.network); i++ {
-		for a := 0; a < len(n.network[i]); a++ {
-			n.network[i][a].adjustedFitness = n.network[i][a].fitness/float64(len(n.network[i]))
-		}
-	}
-}
-
-func (n *Neat) mateNetwork() {
-
 }
