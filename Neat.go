@@ -5,6 +5,7 @@ import (
 	"time"
 	"sort"
 	"math"
+	"fmt"
 )
 
 /*
@@ -22,6 +23,7 @@ type Neat struct {
 	speciesThreshold     float64   //could adjust based upon average difference between networks
 	networkId            int
 	species              []Species
+	numSpecies			int
 }
 
 //todo fix id system
@@ -111,14 +113,14 @@ func (n *Neat) speciate(network *Network) {
 
 	for i := 0; i < len(n.species); i++ {
 		if len(n.species[i].connectionInnovaton) > len(network.innovation) {
-			values[i] = compareGenome(network.numNodes, network.innovation, n.species[i].commonNodes, n.species[i].commonConnection)
+			values[i] = compareGenome(network.id+1, network.innovation, n.species[i].commonNodes, n.species[i].commonConnection)
 		} else {
-			values[i] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, network.numNodes, network.innovation)
+			values[i] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, network.id+1, network.innovation)
 		}
 	}
 
 	//this should be faster than sorting the whole thing (it also retains position information)
-	var index int
+	index := 0
 	lValue := 1000.0
 	for i := 0; i < len(values); i++ {
 		if values[i] < lValue {
@@ -128,7 +130,7 @@ func (n *Neat) speciate(network *Network) {
 	}
 
 	if lValue < n.speciesThreshold {
-
+		fmt.Print(index)
 	} else {
 
 	}
@@ -173,7 +175,7 @@ func (n *Neat) checkSpecies() {
 				lValue = values[i]
 			}
 		}
-
+		fmt.Print(index)
 		if lValue > n.speciesThreshold {
 			currentSpecies := n.species[i].network
 			n.species = append(n.species[:i], n.species[(i+1):]...)
@@ -192,12 +194,12 @@ func (n *Neat) mutateNetwork() {
 		species := int(r.Int63n(int64(len(n.species))))
 		network := n.species[species].network[r.Int63n(int64(len(n.species[species].network)))]
 
-		nodeRange := network.numNodes
+		nodeRange := network.id
 
 		//todo test
 		addConnectionInnovation := func(numTo int, numFrom int) int {
 			ans := n.innovation
-			if len(n.connectionInnovation) >= cap(n.connectionInnovation) {
+			if len(n.connectionInnovation) <= (n.innovation+1) {
 				newStuff := []int{numFrom, numTo}
 				n.connectionInnovation = append(n.connectionInnovation, newStuff)
 			} else {

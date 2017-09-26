@@ -11,6 +11,8 @@ type Node struct {
 	inputRecieved int //number of connections that have responded with input values
 	influenceRecieved int //number of connections that have responded with influence values
 	//activation bool //used to signal input nodes don't need activation but might not need
+	numConIn int
+	numConOut int
 }
 
 //calculate input to this node
