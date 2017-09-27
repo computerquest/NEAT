@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"math"
+	"database/sql/driver"
+)
 
 type Node struct {
 	value float64
@@ -87,4 +90,22 @@ func sigmoid(value float64) float64 {
 
 func sigmoidDerivative(value float64) float64 {
 	return sigmoid(value)*(1 - sigmoid(value))
+}
+
+func (n *Node) addSendCon(c Connection) *Connection {
+	n.send[len(n.send)-n.numConOut-1] = c
+	n.numConOut++
+	return &n.send[len(n.send)-n.numConOut-2]
+}
+func (n *Node) addRecCon(c *Connection) *Connection{
+	n.receive[len(n.receive)-n.numConIn-1] = c
+	n.numConIn++
+	return c
+}
+func (n *Node) getRecCon(i int) *Connection {
+	return n.receive[len(n.receive)-1-i]
+}
+
+func (n *Node) getSendCon(i int) *Connection {
+	return &n.send[len(n.send)-1-i]
 }

@@ -17,6 +17,7 @@ type Network struct {
 	fitness float64
 	adjustedFitness float64
 	numInnovation int
+	networkId int
 }
 
 //processes the network
@@ -121,7 +122,7 @@ func (n *Network) mutateNode(from int, to int) int {
 	return newNode.id
 }
 
-func (n *Network) createNode() Node {
+func (n *Network) createNode() *Node {
 	node := Node {value:0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, len(n.input)), send:make([]Connection, len(n.output))}
 	n.id++
 
@@ -131,11 +132,11 @@ func (n *Network) createNode() Node {
 		n.nodeList[len(n.nodeList)-(1+node.id)] =  node
 	}
 
-	return node
+	return &n.nodeList[len(n.nodeList)-(1+node.id)]
 }
 
 func GetNetworkInstance(input int, output int, id int) Network {
-	n := Network{id: id, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
+	n := Network{networkId: id, id: 0, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
 
 	count := 1
 
@@ -158,7 +159,7 @@ func GetNetworkInstance(input int, output int, id int) Network {
 		//creates the connections
 		for a := 0; a < output; a++ {
 			n.nodeList[len(n.nodeList)-count].send[len(n.nodeList[len(n.nodeList)-count].send)-(1+a)] = Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: n.input[i], nodeTo: n.output[a]}
-			n.nodeList[a].receive[i] = &n.nodeList[count].send[a]
+			n.nodeList[a].receive[i] = &n.nodeList[len(n.nodeList)-count].send[len(n.nodeList[len(n.nodeList)-count].send)-(1+a)]
 			n.numConnections++
 		}
 
@@ -168,4 +169,8 @@ func GetNetworkInstance(input int, output int, id int) Network {
 	fmt.Print("input")
 
 	return n
+}
+
+func (n *Network) getNode(i int) *Node {
+	return &n.nodeList[len(n.nodeList)-i-1]
 }
