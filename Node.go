@@ -2,7 +2,6 @@ package main
 
 import (
 	"math"
-	"database/sql/driver"
 )
 
 type Node struct {
