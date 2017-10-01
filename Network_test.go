@@ -7,14 +7,22 @@ import (
 func TestGetNetworkInstance(t *testing.T) {
 	n := GetNetworkInstance(5,5, 0)
 
-	if len(n.nodeList) < 10 {
-		t.Errorf("we got", len(n.nodeList))
+	if n.numConnections < 10 || n.id < 9 {
+		t.Errorf("we got %d and %d", n.numConnections, n.id)
+	}
+}
+
+func TestCreateNode(t *testing.T) {
+	n := GetNetworkInstance(5,5, 0)
+
+	if n.createNode().id != 10 || n.createNode().id != 11 {
+		t.Errorf("we got %d and %d", n.createNode().id,  n.createNode().id )
 	}
 }
 func TestGetNode(t *testing.T) {
 	n := GetNetworkInstance(5,5, 0)
 
-	if n.getNode(0).id != 0 {
+	if n.getNode(0).id != 0 || n.getNode(9).id != 9 {
 		t.Errorf("we got", n.getNode(0).id)
 	}
 }
@@ -27,7 +35,7 @@ func TestMutateNode(t *testing.T) {
 	ans := false
 
 	for i := 0; i < len(n.nodeList[0].send); i++ {
-		if n.nodeList[0].send[i].nodeTo.id == 8{
+		if n.getNode(0).getSendCon(i).nodeTo.id == 8{
 			ans = true
 		}
 	}

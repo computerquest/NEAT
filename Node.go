@@ -91,14 +91,27 @@ func sigmoidDerivative(value float64) float64 {
 	return sigmoid(value)*(1 - sigmoid(value))
 }
 
+/*
+could have it so that the add methods will add the pointer to themselves
+ */
 func (n *Node) addSendCon(c Connection) *Connection {
-	n.send[len(n.send)-n.numConOut-1] = c
-	n.numConOut++
+	if len(n.send)-1 > n.numConOut {
+		n.send[len(n.send)-n.numConOut-1] = c
+		n.numConOut++
+	} else {
+		n.send = append(n.send, c)
+	}
+
 	return &n.send[len(n.send)-n.numConOut-2]
 }
 func (n *Node) addRecCon(c *Connection) *Connection{
-	n.receive[len(n.receive)-n.numConIn-1] = c
-	n.numConIn++
+	if len(n.receive)-1 > n.numConIn {
+		n.receive[len(n.receive)-n.numConIn-1] = c
+		n.numConIn++
+	} else {
+		n.receive = append(n.receive, c)
+	}
+
 	return c
 }
 func (n *Node) getRecCon(i int) *Connection {

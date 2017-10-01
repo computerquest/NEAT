@@ -69,20 +69,11 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 
 //todo test
 func (n *Network) mutateConnection(from int, to int) {
-	if len(n.nodeList[len(n.nodeList)-from].send) <= (1+n.nodeList[len(n.nodeList)-from].numConOut) {
-		n.nodeList[len(n.nodeList)-from].send = append(n.nodeList[len(n.nodeList)-from].send, Connection{weight: 1, nextWeight: 0, disable: false, nodeFrom: &n.nodeList[len(n.nodeList)-from], nodeTo: &n.nodeList[len(n.nodeList)-to]})
-	} else {
-		n.nodeList[from].send[len(n.nodeList[from].send)-1] = Connection{weight: 1, nextWeight: 0, disable: false, nodeFrom: &n.nodeList[from], nodeTo: &n.nodeList[to]}
-	}
+	n.getNode(to).addRecCon(n.getNode(from).addSendCon(Connection{weight: 1, nextWeight: 0, disable: false, nodeFrom: n.getNode(from), nodeTo: n.getNode(to)}))
 
-	if len(n.nodeList[len(n.nodeList)-to].receive) <= (1+n.nodeList[len(n.nodeList)-to].numConIn) {
-		n.nodeList[len(n.nodeList)-to].receive = append(n.nodeList[len(n.nodeList)-to].receive,  &n.nodeList[len(n.nodeList)-from].send[len( n.nodeList[len(n.nodeList)-from].send)-1])
-	} else {
-		n.nodeList[to].receive[len(n.nodeList[to].receive)-1] =  &n.nodeList[from].send[len( n.nodeList[from].send)-1]
-	}
-
-	n.nodeList[len(n.nodeList)-to].numConIn++
-	n.nodeList[len(n.nodeList)-from].numConOut++
+	n.getNode(to).numConIn++
+	n.getNode(from).numConOut++
+	n.numConnections++
 }
 
 func (n *Network) addInnovation(num int) {
@@ -99,15 +90,15 @@ change from nodes connection to one with new node
 change to nodes pointer to one sent by by new node
  */
 func (n *Network) mutateNode(from int, to int) int {
-	fromNode := &n.nodeList[len(n.nodeList)-from]
-	toNode := &n.nodeList[len(n.nodeList)-to]
-	newNode := &n.nodeList[len(n.nodeList)-(1+n.createNode().id)]
+	fromNode := n.getNode(from)
+	toNode := n.getNode(to)
+	newNode := n.createNode()
 
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
-		if fromNode == toNode.receive[len(toNode.receive)-i].nodeFrom { //compares the memory location
-			newNode.send[0] = Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: newNode, nodeTo:toNode}
-			toNode.receive[i] = &newNode.send[0]
+		if fromNode == toNode.receive[i].nodeFrom { //compares the memory location
+			toNode.receive[i] = newNode.addSendCon(Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: newNode, nodeTo:toNode})
+
 		}
 	}
 
@@ -115,7 +106,7 @@ func (n *Network) mutateNode(from int, to int) int {
 	for i := 0; i < len(fromNode.send); i++ {
 		if fromNode.send[i].nodeTo == toNode {
 			fromNode.send[i].nodeTo = newNode
-			newNode.receive[0] = &fromNode.send[i]
+			newNode.addRecCon(&fromNode.send[i])
 		}
 	}
 
@@ -138,33 +129,21 @@ func (n *Network) createNode() *Node {
 func GetNetworkInstance(input int, output int, id int) Network {
 	n := Network{networkId: id, id: 0, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
 
-	count := 1
-
 	fmt.Print("initialized")
 
 	//create output nodes
 	for i := 0; i < output; i++ {
-		n.nodeList[len(n.nodeList)-count] = Node {value:0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, input)}
-		n.output[i] = &n.nodeList[count]
-		count++
-		n.id++
+		n.output[i] = n.createNode()
 	}
+
 	fmt.Print("output")
 
 	//creates the input nodes and adds them to the network
 	for i := 0; i < input; i++ {
-		n.nodeList[len(n.nodeList)-count] = Node {value:0, id:n.id, influenceRecieved: 0, inputRecieved: 0, send:make([]Connection, output)}
-		n.input[i] = &n.nodeList[count]
-
-		//creates the connections
+		n.input[i] = n.createNode()
 		for a := 0; a < output; a++ {
-			n.nodeList[len(n.nodeList)-count].send[len(n.nodeList[len(n.nodeList)-count].send)-(1+a)] = Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: n.input[i], nodeTo: n.output[a]}
-			n.nodeList[a].receive[i] = &n.nodeList[len(n.nodeList)-count].send[len(n.nodeList[len(n.nodeList)-count].send)-(1+a)]
-			n.numConnections++
+			n.mutateConnection(n.input[i].id, n.output[a].id)
 		}
-
-		n.id++
-		count++
 	}
 	fmt.Print("input")
 
@@ -174,3 +153,4 @@ func GetNetworkInstance(input int, output int, id int) Network {
 func (n *Network) getNode(i int) *Node {
 	return &n.nodeList[len(n.nodeList)-i-1]
 }
+
