@@ -96,7 +96,7 @@ func (n *Network) mutateNode(from int, to int) int {
 
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
-		if fromNode == toNode.receive[i].nodeFrom { //compares the memory location
+		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
 			toNode.receive[i] = newNode.addSendCon(Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: newNode, nodeTo:toNode})
 
 		}

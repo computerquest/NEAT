@@ -32,15 +32,16 @@ func TestMutateNode(t *testing.T) {
 
 	n.mutateNode(0, 8)
 
-	ans := false
+	ans := true
 
-	for i := 0; i < len(n.nodeList[0].send); i++ {
-		if n.getNode(0).getSendCon(i).nodeTo.id == 8{
-			ans = true
+	//the node to is nil (because this has default initial
+	for i := 0; i < len(n.getNode(0).send); i++ {
+		if n.getNode(0).getSendCon(i) != nil && n.getNode(0).getSendCon(i).nodeTo != nil && n.getNode(0).getSendCon(i).nodeTo.id == 8{
+			ans = false
 		}
 	}
 
-	if !ans {
+	if ans {
 		t.Errorf("Sum was incorrect, got: %d, want: %d.", len(n.nodeList), 11)
 	}
 }
