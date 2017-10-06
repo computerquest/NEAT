@@ -234,7 +234,8 @@ func (n *Neat) mutateNetwork() {
 				}
 			}
 
-			network.mutateNode(firstNode, secondNode)
+			//todo give actual innovation numbers
+			network.mutateNode(firstNode, secondNode, 100, 100)
 			n.species[species].nodeCount++
 
 			addConnectionInnovation(firstNode, secondNode)
@@ -267,7 +268,8 @@ func (n *Neat) mutateNetwork() {
 
 			addConnectionInnovation(firstNode, secondNode)
 
-			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))))
+			//todo change the connection number
+			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))), 100)
 		}
 	}
 }

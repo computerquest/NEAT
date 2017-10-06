@@ -30,7 +30,7 @@ func TestGetNode(t *testing.T) {
 func TestMutateNode(t *testing.T) {
 	n := GetNetworkInstance(5, 5, 0)
 
-	n.mutateNode(0, 8, 10, 11)
+	num := n.mutateNode(0, 8, 10, 11)
 
 	ans := true
 	ansA := false
@@ -50,19 +50,47 @@ func TestMutateNode(t *testing.T) {
 		}
 	}
 
-	if !ans && ansA && ansB {
-		t.Errorf("Sum was incorrect, got: %d, want: %d.", ans, ansA)
+	if !ans && ansA && ansB && n.getNode(num).id ==10 {
+		t.Errorf("Sum was incorrect, got: %d, want: %d.", ans, ansA, n.getNode(num).id)
 	}
 }
 
 func TestMutateConnection(t *testing.T) {
+	n := GetNetworkInstance(5, 5, 0)
+	num := n.mutateNode(0,8, 100, 101)
 
+	n.mutateConnection(num, 6, 1000)
+
+	ans := false
+	for i := 0; i < len(n.getNode(num).send); i++ {
+		if nil != n.getNode(num).send[i].nodeTo{
+			t.Log(n.getNode(num).send[i].nodeTo.id)
+		}
+
+		if nil != n.getNode(num).send[i].nodeTo && n.getNode(num).send[i].nodeTo.id == 9 {
+			ans = true
+		}
+	}
+
+	if !ans {
+		t.Errorf("Not found")
+	}
 }
 
 func TestAddInnovation(t *testing.T) {
+	n := GetNetworkInstance(5, 5, 0)
 
+	if n.innovation[1] != 1 {
+		t.Errorf("Sum was incorrect, got: %d, want: %d.", 1, n.innovation[1])
+	}
 }
 
 func TestRemoveInnovation(t *testing.T) {
+	n := GetNetworkInstance(5, 5, 0)
 
+	n.removeInnovation(1)
+
+	if n.innovation[1] == 1 {
+		t.Errorf("Sum was incorrect, got: %d, want: %d.", 1, n.innovation[1])
+	}
 }

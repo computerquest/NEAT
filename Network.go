@@ -79,7 +79,7 @@ func (n *Network) mutateConnection(from int, to int, innovation int) {
 }
 
 func (n *Network) addInnovation(num int) {
-	if len(n.innovation) <= n.numConnections+1 {
+	if len(n.innovation) <= n.numInnovation+1 {
 		n.innovation = append(n.innovation,  num)
 	} else {
 		n.innovation[n.numInnovation+1] =  num
@@ -87,6 +87,7 @@ func (n *Network) addInnovation(num int) {
 	n.numInnovation++
 }
 
+//searches to remove the inovation
 func (n *Network) removeInnovation(num int) {
 	for i := 0; i < len(n.innovation); i++ {
 		if n.innovation[i] == num {
