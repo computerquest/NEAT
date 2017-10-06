@@ -54,6 +54,7 @@ could improve the results by:
 creating a custom rep network that generalizes the species (a stereotype if you will)
 pay greater attention to the speciation comparisons and compare values later in case of dispute
  */
+ //todo need to make sure that even the connections made when initialized are included in the innovation numbers here
 //todo need plan for creating a new species and rearranging species
 //todo need a plan for starting a new species
 //todo finish

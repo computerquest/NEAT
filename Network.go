@@ -6,6 +6,7 @@ import (
 
 //NOTE most of the calculating work is networked by nodes inside the struct
 
+//todo make sure all the innovation number line up
 type Network struct {
 	nodeList []Node //master list of nodes
 	numConnections int
@@ -67,9 +68,10 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 	}*/
 }
 
-//todo test
-func (n *Network) mutateConnection(from int, to int) {
-	n.getNode(to).addRecCon(n.getNode(from).addSendCon(Connection{weight: 1, nextWeight: 0, disable: false, nodeFrom: n.getNode(from), nodeTo: n.getNode(to)}))
+func (n *Network) mutateConnection(from int, to int, innovation int) {
+	n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(to), n.getNode(from), innovation)))
+
+	n.addInnovation(innovation)
 
 	n.getNode(to).numConIn++
 	n.getNode(from).numConOut++
@@ -84,21 +86,33 @@ func (n *Network) addInnovation(num int) {
 	}
 	n.numInnovation++
 }
-//todo test
+
+func (n *Network) removeInnovation(num int) {
+	for i := 0; i < len(n.innovation); i++ {
+		if n.innovation[i] == num {
+			n.innovation = append(n.innovation[:i],n.innovation[i+1:]...)
+		}
+	}
+
+	n.numInnovation--
+}
+
 /*
 change from nodes connection to one with new node
 change to nodes pointer to one sent by by new node
  */
-func (n *Network) mutateNode(from int, to int) int {
+func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) int {
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
 	newNode := n.createNode()
 
+	n.addInnovation(innovatonA)
+	n.addInnovation(innovationB)
+
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
 		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
-			toNode.receive[i] = newNode.addSendCon(Connection{weight: 1, nextWeight: 0, disable:false, nodeFrom: newNode, nodeTo:toNode})
-
+			toNode.receive[i] = newNode.addSendCon(GetConnectionInstance(newNode, toNode, innovatonA))
 		}
 	}
 
@@ -106,6 +120,10 @@ func (n *Network) mutateNode(from int, to int) int {
 	for i := 0; i < len(fromNode.send); i++ {
 		if fromNode.send[i].nodeTo == toNode {
 			fromNode.send[i].nodeTo = newNode
+
+			n.removeInnovation(fromNode.send[i].inNumber)
+			fromNode.send[i].inNumber = innovationB
+
 			newNode.addRecCon(&fromNode.send[i])
 		}
 	}
@@ -127,7 +145,7 @@ func (n *Network) createNode() *Node {
 }
 
 func GetNetworkInstance(input int, output int, id int) Network {
-	n := Network{networkId: id, id: 0, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
+	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
 
 	fmt.Print("initialized")
 
@@ -142,10 +160,9 @@ func GetNetworkInstance(input int, output int, id int) Network {
 	for i := 0; i < input; i++ {
 		n.input[i] = n.createNode()
 		for a := 0; a < output; a++ {
-			n.mutateConnection(n.input[i].id, n.output[a].id)
+			n.mutateConnection(n.input[i].id, n.output[a].id, n.numConnections)
 		}
 	}
-	fmt.Print("input")
 
 	return n
 }
