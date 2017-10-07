@@ -102,7 +102,7 @@ func (n *Node) addSendCon(c Connection) *Connection {
 		n.send = append(n.send, c)
 	}
 
-	return &n.send[len(n.send)-n.numConOut-2]
+	return &n.send[len(n.send)-n.numConOut]
 }
 func (n *Node) addRecCon(c *Connection) *Connection{
 	if len(n.receive)-1 > n.numConIn {

@@ -69,8 +69,15 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 }
 
 func (n *Network) mutateConnection(from int, to int, innovation int) {
-	n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(to), n.getNode(from), innovation)))
+	//n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(to), n.getNode(from), innovation)))
 
+	c := n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(from), n.getNode(to), innovation))
+	b := n.getNode(to).addRecCon(c)
+
+	fmt.Println("/////")
+	fmt.Println(c)
+	fmt.Println(b)
+	fmt.Println("/////")
 	n.addInnovation(innovation)
 
 	n.getNode(to).numConIn++
@@ -112,14 +119,20 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) 
 
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
+		if toNode.receive[i] != nil {
+			fmt.Println(toNode.receive[i].nodeFrom.id)
+		}
 		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
 			toNode.receive[i] = newNode.addSendCon(GetConnectionInstance(newNode, toNode, innovatonA))
 		}
 	}
-
+	fmt.Println("")
 	//todo find a better way?
 	for i := 0; i < len(fromNode.send); i++ {
-		if fromNode.send[i].nodeTo == toNode {
+		if fromNode.send[i].nodeTo != nil {
+			fmt.Println(fromNode.send[i].nodeTo.id)
+		}
+		if fromNode.send[i].nodeTo != nil && fromNode.send[i].nodeTo.id == toNode.id {
 			fromNode.send[i].nodeTo = newNode
 
 			n.removeInnovation(fromNode.send[i].inNumber)
@@ -129,11 +142,12 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) 
 		}
 	}
 
+	fmt.Print(newNode)
 	return newNode.id
 }
 
 func (n *Network) createNode() *Node {
-	node := Node {value:0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, len(n.input)), send:make([]Connection, len(n.output))}
+	node := Node {value:0, numConOut: 0, numConIn: 0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, len(n.input)), send:make([]Connection, len(n.output))}
 	n.id++
 
 	if (node.id+1) >= len(n.nodeList) {
@@ -142,7 +156,7 @@ func (n *Network) createNode() *Node {
 		n.nodeList[len(n.nodeList)-(1+node.id)] =  node
 	}
 
-	return &n.nodeList[len(n.nodeList)-(1+node.id)]
+	return n.getNode(node.id)
 }
 
 func GetNetworkInstance(input int, output int, id int) Network {
