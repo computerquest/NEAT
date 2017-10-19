@@ -2,6 +2,8 @@ package main
 
 import (
 	"sort"
+	"math"
+	"math/rand"
 )
 
 type Species struct {
@@ -33,7 +35,54 @@ func (s *Species) adjustFitness() {
 }
 
 //todo finish
-func (s *Species) mate() {
+func (s *Species) nextGen() {
+	s.adjustFitness()
+	amountToRemove := len(s.network)*.1
+
+	//this is all for removing
+
+	removeWorst := func() {
+		leastIndex := 0
+		for i := 1; i < len(s.network); i++ {
+			if s.network[leastIndex].adjustedFitness > s.network[i].adjustedFitness {
+				leastIndex = i
+			}
+		}
+
+		s.removeNetwork(s.network[leastIndex])
+	}
+
+	for i := 0; i < amountToRemove; i++ {
+		removeWorst()
+	}
+
+	//this is for calculating kids and starting the mating
+
+	//random mating
+	//todo redo
+	matingPairs := make([][]int , len(s.network)) //this might be wrong
+	for i := 0; i < len(s.network); i++ {
+		numKid := int(s.network[i].adjustedFitness)*len(s.network)
+
+		//todo non random mating?
+		for a := 0; a < numKid; a++ {
+			good := false
+			for !good {
+				secondNet := int(rand.Int63n(int64(len(s.network))))
+
+				if secondNet != i {
+					for b := 0; b < len(matingPairs); b++ {
+
+					}
+				}
+			}
+		}
+	}
+
+}
+
+//todo finish
+func (s *Species) mate(n *Network, nA *Network) {
 
 }
 
