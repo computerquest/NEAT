@@ -27,7 +27,6 @@ func (n *Network) Process(input []float64) {
 	}
 }
 
-//todo test when time
 //backpropogates the network to desired one time
 func (n *Network) BackProp(input []float64, desired []float64) {
 	n.Process(input) //need to do so that you are performing the algorithm on that set of values
