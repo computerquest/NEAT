@@ -18,7 +18,7 @@ func GetSpeciesInstance(maxInnovation int, networks []*Network) Species {
 
 	//doing this so slice passed is not kept in memory
 	for i := 0; i <= len(s.network)-1; i++ {
-		s.network[i] = networks[len(s.network)-i]
+		s.network[i] = networks[len(s.network)-i-1]
 	}
 
 	s.updateStereotype()
@@ -33,8 +33,35 @@ func (s *Species) adjustFitness() {
 }
 
 //todo finish
-func (s *Species) mate() {
+//todo change all the pointers
+func (s *Species) mate(n *Network, nA *Network) Network{
+	s.numNetwork++
+	newNetwork := *n
+	newNetwork.networkId = s.numNetwork
 
+	for nA.id > newNetwork.id {
+		newNetwork.createNode()
+	}
+
+	//todo simplify
+	for i := 0; i <= nA.id; i ++ {
+		node := nA.getNode(i)
+		for a := 0; a < len(node.send); a++ {
+			checkNum := node.getSendCon(a).inNumber
+			contains := false
+			for b := 0; b < len(newNetwork.innovation); b++ {
+				if newNetwork.innovation[b] == checkNum {
+					contains = true
+					break
+				}
+			}
+
+			if !contains {
+			}
+		}
+	}
+
+	return newNetwork
 }
 
 //todo test
@@ -92,6 +119,24 @@ func (s *Species) addNetwork(n *Network) {
 	}
 
 	s.numNetwork++
+}
+
+func (s *Species) getInovOcc(i int) *int {
+	return &s.connectionInnovaton[len(s.connectionInnovaton)-1-i]
+}
+
+//todo reduce lines
+func (s *Species) incrementInov(i int) *int {
+	ans := s.getInovOcc(i)
+	*ans += 1
+	return ans
+}
+
+//todo reduce lines
+func (s *Species) reduceInov(i int) *int {
+	ans := s.getInovOcc(i)
+	*ans -= 1
+	return ans
 }
 
 //might be able to do by id

@@ -6,7 +6,6 @@ import (
 
 //NOTE most of the calculating work is networked by nodes inside the struct
 
-//todo make sure all the innovation number line up
 type Network struct {
 	nodeList []Node //master list of nodes
 	numConnections int
@@ -119,19 +118,12 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) 
 
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
-		if toNode.receive[i] != nil {
-			fmt.Println(toNode.receive[i].nodeFrom.id)
-		}
 		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
 			toNode.receive[i] = newNode.addSendCon(GetConnectionInstance(newNode, toNode, innovatonA))
 		}
 	}
-	fmt.Println("")
 	//todo find a better way?
 	for i := 0; i < len(fromNode.send); i++ {
-		if fromNode.send[i].nodeTo != nil {
-			fmt.Println(fromNode.send[i].nodeTo.id)
-		}
 		if fromNode.send[i].nodeTo != nil && fromNode.send[i].nodeTo.id == toNode.id {
 			fromNode.send[i].nodeTo = newNode
 
@@ -142,7 +134,6 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) 
 		}
 	}
 
-	fmt.Print(newNode)
 	return newNode.id
 }
 
