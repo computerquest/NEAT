@@ -1,9 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
-
 //NOTE most of the calculating work is networked by nodes inside the struct
 
 type Network struct {
@@ -67,15 +63,6 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 }
 
 func (n *Network) mutateConnection(from int, to int, innovation int) {
-	//n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(to), n.getNode(from), innovation)))
-
-	c := n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(from), n.getNode(to), innovation))
-	b := n.getNode(to).addRecCon(c)
-
-	fmt.Println("/////")
-	fmt.Println(c)
-	fmt.Println(b)
-	fmt.Println("/////")
 	n.addInnovation(innovation)
 
 	n.getNode(to).numConIn++
@@ -152,14 +139,10 @@ func (n *Network) createNode() *Node {
 func GetNetworkInstance(input int, output int, id int) Network {
 	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
 
-	fmt.Print("initialized")
-
 	//create output nodes
 	for i := 0; i < output; i++ {
 		n.output[i] = n.createNode()
 	}
-
-	fmt.Print("output")
 
 	//creates the input nodes and adds them to the network
 	for i := 0; i < input; i++ {

@@ -13,15 +13,15 @@ type Species struct {
 	numNetwork 			int
 }
 
-func GetSpeciesInstance(maxInnovation int, networks []*Network) Species {
+func GetSpeciesInstance(maxInnovation int, networks []Network) Species {
 	s := Species{network: make([]*Network, cap(networks)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0}
 
-	//doing this so slice passed is not kept in memory
-	for i := 0; i <= len(s.network)-1; i++ {
-		s.network[i] = networks[len(s.network)-i-1]
+	for i := 0; i < len(networks); i++ {
+		s.network[i] = &networks[i]
 	}
 
-	s.updateStereotype()
+	//todo uncomment after testing
+	//s.updateStereotype()
 
 	return s
 }
@@ -119,6 +119,17 @@ func (s *Species) addNetwork(n *Network) {
 	}
 
 	s.numNetwork++
+}
+
+//todo more efficient?
+func (s *Species) getNetwork(id int) *Network {
+	for i := 0; i < len(s.network); i++ {
+		if s.network[i].networkId == id {
+			return s.network[i]
+		}
+	}
+
+	return nil
 }
 
 func (s *Species) getInovOcc(i int) *int {
