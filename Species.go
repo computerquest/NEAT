@@ -14,7 +14,7 @@ type Species struct {
 }
 
 func GetSpeciesInstance(maxInnovation int, networks []Network) Species {
-	s := Species{network: make([]*Network, cap(networks)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0}
+	s := Species{network: make([]*Network, cap(networks)), commonConnection: make([]int, int(maxInnovation*2)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0}
 
 	for i := 0; i < len(networks); i++ {
 		s.network[i] = &networks[i]
@@ -32,8 +32,8 @@ func (s *Species) adjustFitness() {
 	}
 }
 
-//todo finish
-//todo change all the pointers
+//todo have an add max innovation method
+//todo make sure it adds innovations upon creation
 func (s *Species) mate(n *Network, nA *Network) Network{
 	s.numNetwork++
 	newNetwork := *n
@@ -64,29 +64,27 @@ func (s *Species) mate(n *Network, nA *Network) Network{
 	return newNetwork
 }
 
-//todo test
 func (s *Species) updateStereotype() {
 	numNodes := 0
 	s.nodeCount = 0
 
-	for i := 0; i < len(s.connectionInnovaton)-1; i++ {
-		s.connectionInnovaton[len(s.connectionInnovaton)-i] = 0
+	for i := 0; i < len(s.connectionInnovaton); i++ {
+		s.connectionInnovaton[i] = 0
 	}
 
+	for i := 0; i < len(s.commonConnection); i++ {
+		s.commonConnection[i] = 0
+	}
 	for i := 0; i < len(s.network); i++ {
 		numNodes += s.network[i].id+1
 		for a := 0; a < len(s.network[i].innovation); a++ {
-			if s.network[i].innovation[a] >= len(s.connectionInnovaton) {
-				s.connectionInnovaton = append(s.connectionInnovaton)
-			}
-			s.connectionInnovaton[len(s.connectionInnovaton)-s.network[i].innovation[a]]++
+			s.connectionInnovaton[s.network[i].innovation[a]]++
 		}
 	}
 
-	count := 0
 	for i := 0; i < len(s.connectionInnovaton); i++ {
 		if float64(s.connectionInnovaton[i]/len(s.network)) > .6 {
-			s.commonConnection[count] = s.connectionInnovaton[i]
+			s.commonConnection[i] = 1
 		}
 	}
 
@@ -97,12 +95,7 @@ func (s *Species) updateStereotype() {
 //used as a wrapper to mutate networks
 //will allow to monitor and change the stereotype dynamically without all the loops and access will need the same for mating
 func (s *Species) mutateNetwork(innovate int) {
-	if len(s.connectionInnovaton) <= (innovate+1) {
-		s.connectionInnovaton[len(s.connectionInnovaton)-(innovate+1)]++
-	} else {
-		s.connectionInnovaton = append(s.connectionInnovaton)
-		s.connectionInnovaton[len(s.connectionInnovaton)-(innovate+1)]++
-	}
+	s.incrementInov(innovate)
 }
 
 func (s *Species) sortInnovation() {
@@ -121,7 +114,6 @@ func (s *Species) addNetwork(n *Network) {
 	s.numNetwork++
 }
 
-//todo more efficient?
 func (s *Species) getNetwork(id int) *Network {
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i].networkId == id {
@@ -136,28 +128,25 @@ func (s *Species) getInovOcc(i int) *int {
 	return &s.connectionInnovaton[len(s.connectionInnovaton)-1-i]
 }
 
-//todo reduce lines
 func (s *Species) incrementInov(i int) *int {
 	ans := s.getInovOcc(i)
-	*ans += 1
+	*ans++
 	return ans
 }
 
-//todo reduce lines
 func (s *Species) reduceInov(i int) *int {
 	ans := s.getInovOcc(i)
-	*ans -= 1
+	*ans--
 	return ans
 }
 
-//might be able to do by id
-func (s *Species) removeNetwork(n *Network) {
+func (s *Species) removeNetwork(id int) {
 	index := 0
 	for i := 0; i < len(s.network); i++ {
-		if s.network[i].id == n.id {
+		if s.network[i].networkId == id {
 			index = i
 		}
 	}
 
-	s.network = append(s.network[:index], s.network[index:]...)
+	s.network = append(s.network[:index], s.network[index+1:]...)
 }
