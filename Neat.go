@@ -13,8 +13,6 @@ not going to speciate until after a couple of rounds
  */
 
 type Neat struct {
-	//species              int         //number of species desired
-	//nps                  int         //networks per species
 	connectMutate        float64   //odds for connection mutation
 	nodeMutate           float64   //odds for node mutation
 	innovation           int       //number of innovations
@@ -23,14 +21,14 @@ type Neat struct {
 	speciesThreshold     float64   //could adjust based upon average difference between networks
 	networkId            int
 	species              []Species
-	numSpecies			int
+	numSpecies           int
 }
 
 //todo fix id system
 //todo finish
-func GetNeatInstance(numNetworks int) Neat {
+func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7,
-		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10)}
+		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, int(numNetworks/5))}
 
 	for i := 0; i < len(n.connectionInnovation); i++ {
 		n.connectionInnovation[i] = make([]int, 2)
@@ -42,6 +40,18 @@ func GetNeatInstance(numNetworks int) Neat {
 		between 1-3 for each network
 	speciate
 	 */
+
+	for i := 0; i < len(n.network); i++ {
+		n.network[len(n.network)-1-i] = GetNetworkInstance(input, output, i)
+	}
+
+	n.species[0] = GetSpeciesInstance(100, n.network[0:len(n.network)%5+5+1])
+	for i, b := len(n.network)%5+5+1, 1; i+5 <= len(n.network); i, b = i+5, b+1 {
+		n.species[b] = GetSpeciesInstance(100, n.network[i:i+5])
+		//todo uncomment when done
+		//n.mutateNetwork()
+	}
+
 	return n
 }
 
@@ -54,7 +64,7 @@ could improve the results by:
 creating a custom rep network that generalizes the species (a stereotype if you will)
 pay greater attention to the speciation comparisons and compare values later in case of dispute
  */
- //todo need to make sure that even the connections made when initialized are included in the innovation numbers here
+//todo need to make sure that even the connections made when initialized are included in the innovation numbers here
 //todo need plan for creating a new species and rearranging species
 //todo need a plan for starting a new species
 //todo finish
@@ -179,7 +189,7 @@ func (n *Neat) checkSpecies() {
 		fmt.Print(index)
 		if lValue > n.speciesThreshold {
 			currentSpecies := n.species[i].network
-			n.species = append(n.species[:i], n.species[(i+1):]...)
+			n.species = append(n.species[:i], n.species[(i + 1):]...)
 			for a := 0; a < len(currentSpecies); a++ {
 				n.speciate(currentSpecies[a])
 			}
@@ -200,7 +210,7 @@ func (n *Neat) mutateNetwork() {
 		//todo test
 		addConnectionInnovation := func(numTo int, numFrom int) int {
 			ans := n.innovation
-			if len(n.connectionInnovation) <= (n.innovation+1) {
+			if len(n.connectionInnovation) <= (n.innovation + 1) {
 				newStuff := []int{numFrom, numTo}
 				n.connectionInnovation = append(n.connectionInnovation, newStuff)
 			} else {

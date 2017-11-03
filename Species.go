@@ -4,24 +4,24 @@ import (
 	"sort"
 )
 
+//todo fix the avg because empty slots created by append will screw
 type Species struct {
-	network             []*Network
-	connectionInnovaton []int //this will be the max size of innovation number
-	nodeCount           int
-	commonConnection    []int
-	commonNodes         int
-	numNetwork 			int
+	network             []*Network //holds the pointer to all the networks
+	connectionInnovaton []int      //holds number of occerences of each innovation
+	nodeCount           int        //number of total nodes
+	commonConnection    []int      //common connection innovation numbers
+	commonNodes         int        //avg number of nodes
+	numNetwork          int        //number of networks in species
 }
 
 func GetSpeciesInstance(maxInnovation int, networks []Network) Species {
-	s := Species{network: make([]*Network, cap(networks)), commonConnection: make([]int, int(maxInnovation*2)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0}
+	s := Species{network: make([]*Network, cap(networks)), commonConnection: make([]int, int(maxInnovation*2)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0, numNetwork: len(networks)}
 
 	for i := 0; i < len(networks); i++ {
 		s.network[i] = &networks[i]
 	}
 
-	//todo uncomment after testing
-	//s.updateStereotype()
+	s.updateStereotype()
 
 	return s
 }
@@ -76,9 +76,11 @@ func (s *Species) updateStereotype() {
 		s.commonConnection[i] = 0
 	}
 	for i := 0; i < len(s.network); i++ {
-		numNodes += s.network[i].id+1
-		for a := 0; a < len(s.network[i].innovation); a++ {
-			s.connectionInnovaton[s.network[i].innovation[a]]++
+		if s.network[i] != nil {
+			numNodes += s.network[i].id + 1
+			for a := 0; a < len(s.network[i].innovation); a++ {
+				s.connectionInnovaton[s.network[i].innovation[a]]++
+			}
 		}
 	}
 
