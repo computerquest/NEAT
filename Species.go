@@ -15,7 +15,7 @@ type Species struct {
 }
 
 func GetSpeciesInstance(maxInnovation int, networks []Network) Species {
-	s := Species{network: make([]*Network, cap(networks)), commonConnection: make([]int, int(maxInnovation*2)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0, numNetwork: len(networks)}
+	s := Species{network: make([]*Network, len(networks)), commonConnection: make([]int, int(maxInnovation*2)), connectionInnovaton: make([]int, int(maxInnovation*2)), commonNodes: 0, nodeCount: 0, numNetwork: len(networks)}
 
 	for i := 0; i < len(networks); i++ {
 		s.network[i] = &networks[i]
@@ -118,7 +118,7 @@ func (s *Species) addNetwork(n *Network) {
 
 func (s *Species) getNetwork(id int) *Network {
 	for i := 0; i < len(s.network); i++ {
-		if s.network[i].networkId == id {
+		if s.network[i] != nil && s.network[i].networkId == id {
 			return s.network[i]
 		}
 	}
@@ -151,4 +151,8 @@ func (s *Species) removeNetwork(id int) {
 	}
 
 	s.network = append(s.network[:index], s.network[index+1:]...)
+}
+
+func (s *Species) getNetworkAt(a int) *Network {
+	return s.network[len(s.network)-a-1]
 }

@@ -3,17 +3,18 @@ package main
 //NOTE most of the calculating work is networked by nodes inside the struct
 
 type Network struct {
-	nodeList []Node //master list of nodes
-	numConnections int
-	innovation []int //list of inovation numbers this network has (SORTED)
-	id int //network id
-	learningRate float64 //learning rate for backprop
-	output []*Node //output nodes
-	input []*Node //input nodes
-	fitness float64
+	nodeList        []Node //master list of nodes
+	numConnections  int
+	innovation      []int //list of inovation numbers this network has (SORTED)
+	id              int //network id
+	learningRate    float64 //learning rate for backprop
+	output          []*Node //output nodes
+	input           []*Node //input nodes
+	fitness         float64
 	adjustedFitness float64
-	numInnovation int
-	networkId int
+	numInnovation   int
+	networkId       int
+	species         int
 }
 
 //processes the network
@@ -70,6 +71,9 @@ func (n *Network) mutateConnection(from int, to int, innovation int) {
 	n.numConnections++
 }
 
+func (n *Network) getInovation(pos int) int {
+	return n.innovation[len(n.innovation)-pos-1]
+}
 func (n *Network) addInnovation(num int) {
 	if len(n.innovation) <= n.numInnovation+1 {
 		n.innovation = append(n.innovation,  num)
@@ -136,8 +140,8 @@ func (n *Network) createNode() *Node {
 	return n.getNode(node.id)
 }
 
-func GetNetworkInstance(input int, output int, id int) Network {
-	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections:0, nodeList:make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input)}
+func GetNetworkInstance(input int, output int, id int, species int) Network {
+	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections: 0, nodeList: make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input), species: species}
 
 	//create output nodes
 	for i := 0; i < output; i++ {

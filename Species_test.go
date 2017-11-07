@@ -12,7 +12,7 @@ editing networks
 func TestGetSpeciesInstance(t *testing.T) {
 	n := make([]Network,10)
 	for i := 0; i < len(n); i++ {
-		n[i] = GetNetworkInstance(5,5, i)
+		n[i] = GetNetworkInstance(5, 5, i, 0)
 	}
 
 	s := GetSpeciesInstance(100, n)
@@ -30,7 +30,7 @@ func TestGetSpeciesInstance(t *testing.T) {
 func TestUpdateStereoType(t *testing.T) {
 	n := make([]Network, 10)
 	for i := 0; i < len(n); i++ {
-		n[i] = GetNetworkInstance(5, 5, i)
+		n[i] = GetNetworkInstance(5, 5, i, 0)
 	}
 
 	s := GetSpeciesInstance(100, n)
@@ -59,7 +59,7 @@ func TestUpdateStereoType(t *testing.T) {
 func TestMutateNetwork(t *testing.T) {
 	n := make([]Network, 10)
 	for i := 0; i < len(n); i++ {
-		n[i] = GetNetworkInstance(5, 5, i)
+		n[i] = GetNetworkInstance(5, 5, i, 0)
 	}
 
 	s := GetSpeciesInstance(100, n)
@@ -74,7 +74,7 @@ func TestMutateNetwork(t *testing.T) {
 func TestGetNetwork(t *testing.T) {
 	n := make([]Network, 10)
 	for i := 0; i < len(n); i++ {
-		n[i] = GetNetworkInstance(5, 5, i)
+		n[i] = GetNetworkInstance(5, 5, i, 0)
 	}
 	s := GetSpeciesInstance(100, n)
 
@@ -86,7 +86,7 @@ func TestGetNetwork(t *testing.T) {
 func TestRemoveNetwork(t *testing.T) {
 	n := make([]Network, 10)
 	for i := 0; i < len(n); i++ {
-		n[i] = GetNetworkInstance(5, 5, i)
+		n[i] = GetNetworkInstance(5, 5, i, 0)
 	}
 	s := GetSpeciesInstance(100, n)
 

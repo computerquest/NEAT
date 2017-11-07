@@ -28,7 +28,7 @@ type Neat struct {
 //todo finish
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7,
-		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, int(numNetworks/5))}
+		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, 5)}
 
 	for i := 0; i < len(n.connectionInnovation); i++ {
 		n.connectionInnovation[i] = make([]int, 2)
@@ -42,17 +42,71 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	 */
 
 	for i := 0; i < len(n.network); i++ {
-		n.network[len(n.network)-1-i] = GetNetworkInstance(input, output, i)
+		n.network[len(n.network)-1-i] = GetNetworkInstance(input, output, i, 0)
 	}
 
-	n.species[0] = GetSpeciesInstance(100, n.network[0:len(n.network)%5+5+1])
-	for i, b := len(n.network)%5+5+1, 1; i+5 <= len(n.network); i, b = i+5, b+1 {
-		n.species[b] = GetSpeciesInstance(100, n.network[i:i+5])
+	n.species[0] = GetSpeciesInstance(100, n.network[0:len(n.network)%5+(numNetworks/5)+1])
+	for i, b := len(n.network)%5+(numNetworks/5)+1, 1; i+(numNetworks/5) < len(n.network); i, b = i+(numNetworks/5), b+1 {
+		n.species[b] = GetSpeciesInstance(100, n.network[i:i+(numNetworks/5)])
 		//todo uncomment when done
 		//n.mutateNetwork()
 	}
 
 	return n
+}
+
+func (n *Neat) mateNetwork(nB Network, nA Network, idNum int) Network {
+	ans := GetNetworkInstance(len(nB.output), len(nB.input), idNum, nB.species)
+
+	var numNode int
+	if nA.id > nB.id {
+		numNode = nA.id
+	} else {
+		numNode = nB.id
+	}
+
+	for i := ans.id; i < numNode; i++ {
+		ans.createNode()
+	}
+
+	for i := 0; i < nA.numInnovation; i++ {
+		ans.mutateConnection(n.connectionInnovation[nA.getInovation(i)][0], n.connectionInnovation[nA.getInovation(i)][1], nA.getInovation(i))
+	}
+
+	for i := 0; i < nB.numInnovation; i++ {
+		exist := false
+		for a := 0; a < nA.numInnovation; a++ {
+			if nB.getInovation(i) == nA.getInovation(a) {
+				exist = true
+			}
+		}
+
+		if !exist {
+			ans.mutateConnection(n.connectionInnovation[nB.innovation[i]][0], n.connectionInnovation[nB.innovation[i]][1], nB.innovation[i])
+		}
+	}
+
+	return ans
+}
+func (n *Neat) mateSpecies(s *Species) {
+	s.adjustFitness()
+
+	//sorts by adjusted fitness
+	sortedNetwork := make([]*Network, s.numNetwork*85/100)
+	sumFitness := 0.0
+	for i := 0; i < len(s.network); i++ {
+		for a := i; a < len(s.network); a++ {
+			if s.network[i] != nil && s.getNetworkAt(a).adjustedFitness > s.network[i].adjustedFitness {
+				sortedNetwork[i] = s.getNetworkAt(a)
+			}
+		}
+
+		sumFitness += sortedNetwork[i].adjustedFitness
+	}
+
+	for i := 1; i < len(sortedNetwork); i++ {
+
+	}
 }
 
 //rewrite
@@ -199,11 +253,12 @@ func (n *Neat) checkSpecies() {
 
 //todo test
 //TODO make sure that i am not adding connections twice
-func (n *Neat) mutateNetwork() {
+func (n *Neat) mutatePopulation() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	for i := 0; i < int(r.Int63n(int64(len(n.network)))/5); i++ {
+	numNet := int(r.Int63n(int64(len(n.network)))-3/5) + 3;
+	for i := 0; i < numNet; i++ {
 		species := int(r.Int63n(int64(len(n.species))))
-		network := n.species[species].network[r.Int63n(int64(len(n.species[species].network)))]
+		network := n.species[species].getNetworkAt(int(r.Int63n(int64(n.species[species].numNetwork))))
 
 		nodeRange := network.id
 
@@ -272,7 +327,7 @@ func (n *Neat) mutateNetwork() {
 				attempts++
 			}
 
-			if (attempts > 5) {
+			if attempts > 5 {
 				nodeMutate()
 			}
 

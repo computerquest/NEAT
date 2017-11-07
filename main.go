@@ -3,9 +3,9 @@ package main
 import ("fmt")
 
 func main() {
-	n := GetNetworkInstance(5,5, 0)
+	s := GetNeatInstance(40, 5, 5)
 
-	n.mutateNode(5, 0,1,9)
+	s.mutatePopulation()
 
 	fmt.Print("works")
 }

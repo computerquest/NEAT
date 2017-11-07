@@ -5,7 +5,7 @@ import (
 )
 
 func TestGetNetworkInstance(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 
 	if n.numConnections < 10 || n.id < 9 {
 		t.Errorf("we got %d and %d", n.numConnections, n.id)
@@ -13,7 +13,7 @@ func TestGetNetworkInstance(t *testing.T) {
 }
 
 func TestCreateNode(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 
 	a := n.createNode()
 	b := n.createNode()
@@ -22,7 +22,7 @@ func TestCreateNode(t *testing.T) {
 	}
 }
 func TestGetNode(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 
 	if n.getNode(0).id != 0 || n.getNode(9).id != 9 {
 		t.Errorf("we got", n.getNode(0).id)
@@ -30,7 +30,7 @@ func TestGetNode(t *testing.T) {
 }
 
 func TestMutateNode(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 
 	num := n.mutateNode(5, 0, 10, 11)
 
@@ -58,7 +58,7 @@ func TestMutateNode(t *testing.T) {
 }
 
 func TestMutateConnection(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 	num := n.mutateNode(5,0, 100, 101)
 
 	n.mutateConnection(num, 9, 1000)
@@ -87,7 +87,7 @@ func TestMutateConnection(t *testing.T) {
 }
 
 func TestAddInnovation(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 
 	if n.innovation[1] != 1 {
 		t.Errorf("Sum was incorrect, got: %d, want: %d.", 1, n.innovation[1])
@@ -95,7 +95,7 @@ func TestAddInnovation(t *testing.T) {
 }
 
 func TestRemoveInnovation(t *testing.T) {
-	n := GetNetworkInstance(5, 5, 0)
+	n := GetNetworkInstance(5, 5, 0, 0)
 
 	n.removeInnovation(1)
 
