@@ -13,25 +13,20 @@ func TestGetNeatInstance(t *testing.T) {
 	}
 }
 
-//todo needs to be finished
 func TestMutatePopulation(t *testing.T) {
 	s := GetNeatInstance(40, 5, 5)
 
-	s.mutatePopulation()
+	og := s.species[0].getNetworkAt(0).numInnovation
 
-	if len(s.network) != 40 {
+	s.mutatePopulationTest()
+
+	if s.species[0].getNetworkAt(0).numInnovation == og {
 		t.Errorf("didnt do anything")
-	}
-	if len(s.network) != 40 {
-		t.Errorf("bad new innovation")
 	}
 }
 
 func TestMateNetwork(t *testing.T) {
 	s := GetNeatInstance(40, 5, 5)
-
-	s.mutatePopulation()
-	s.mutatePopulation()
 
 	if len(s.network) != 40 {
 		t.Errorf("didnt do anything")
