@@ -28,10 +28,15 @@ func TestMutatePopulation(t *testing.T) {
 func TestMateNetwork(t *testing.T) {
 	s := GetNeatInstance(40, 5, 5)
 
-	if len(s.network) != 40 {
-		t.Errorf("didnt do anything")
+	s.mutatePopulationTest()
+	s.mutatePopulationTest()
+
+	n := s.mateNetwork(*(s.species[0].getNetworkAt(0)), *(s.species[0].getNetworkAt(1)), 100)
+
+	if n.networkId != 100 {
+		t.Errorf("got the wrong id")
 	}
-	if len(s.network) != 40 {
+	if n.numInnovation != s.species[0].getNetworkAt(0).numInnovation || n.id != s.species[0].getNetworkAt(0).id {
 		t.Errorf("bad new innovation")
 	}
 }

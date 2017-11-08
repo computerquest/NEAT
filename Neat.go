@@ -425,3 +425,16 @@ func (n *Neat) mutatePopulationTest() {
 		}
 	}
 }
+
+func (n *Neat) createNewInnovation(values []int) []int {
+	n.innovation++
+	if n.innovation > len(n.connectionInnovation)-1 {
+		n.connectionInnovation = append(n.connectionInnovation, values)
+	}
+
+	return n.getInnovation(n.innovation)
+}
+
+func (n *Neat) getInnovation(num int) []int {
+	return n.connectionInnovation[len(n.connectionInnovation)-1-num]
+}
