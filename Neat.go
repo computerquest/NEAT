@@ -24,8 +24,8 @@ type Neat struct {
 	numSpecies           int
 }
 
-//todo fix id system
-//todo finish
+//TODO: fix id system
+//TODO: finish
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7,
 		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, 5)}
@@ -48,7 +48,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n.species[0] = GetSpeciesInstance(100, n.network[0:len(n.network)%5+(numNetworks/5)+1])
 	for i, b := len(n.network)%5+(numNetworks/5)+1, 1; i+(numNetworks/5) < len(n.network); i, b = i+(numNetworks/5), b+1 {
 		n.species[b] = GetSpeciesInstance(100, n.network[i:i+(numNetworks/5)])
-		//todo uncomment when done
+		//TODO: uncomment when done
 		//n.mutateNetwork()
 	}
 
@@ -70,7 +70,7 @@ func (n *Neat) mateNetwork(nB Network, nA Network, idNum int) Network {
 	}
 
 	for i := 0; i < nA.numInnovation; i++ {
-		ans.mutateConnection(n.connectionInnovation[nA.getInovation(i)][0], n.connectionInnovation[nA.getInovation(i)][1], nA.getInovation(i))
+		ans.mutateConnection(n.getInnovation(nA.getInovation(i))[0], n.getInnovation(nA.getInovation(i))[1], nA.getInovation(i))
 	}
 
 	for i := 0; i < nB.numInnovation; i++ {
@@ -78,11 +78,12 @@ func (n *Neat) mateNetwork(nB Network, nA Network, idNum int) Network {
 		for a := 0; a < nA.numInnovation; a++ {
 			if nB.getInovation(i) == nA.getInovation(a) {
 				exist = true
+				break
 			}
 		}
 
 		if !exist {
-			ans.mutateConnection(n.connectionInnovation[nB.innovation[i]][0], n.connectionInnovation[nB.innovation[i]][1], nB.innovation[i])
+			ans.mutateConnection(n.getInnovation(nB.getInovation(i))[0], n.getInnovation(nB.getInovation(i))[1], nB.getInovation(i))
 		}
 	}
 
@@ -118,10 +119,10 @@ could improve the results by:
 creating a custom rep network that generalizes the species (a stereotype if you will)
 pay greater attention to the speciation comparisons and compare values later in case of dispute
 */
-//todo need to make sure that even the connections made when initialized are included in the innovation numbers here
-//todo need plan for creating a new species and rearranging species
-//todo need a plan for starting a new species
-//todo finish
+//TODO: need to make sure that even the connections made when initialized are included in the innovation numbers here
+//TODO: need plan for creating a new species and rearranging species
+//TODO: need a plan for starting a new species
+//TODO: finish
 func (n *Neat) speciate(network *Network) {
 	/*repNetworks := make([]*Network, n.species)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -140,7 +141,7 @@ func (n *Neat) speciate(network *Network) {
 		for b := 0; b < len(inputS); b++ {
 			ans := sort.SearchInts(inputL, inputS[b])
 
-			//todo find default return value
+			//TODO: find default return value
 			if ans == -1 {
 				missing++
 			}
@@ -149,7 +150,7 @@ func (n *Neat) speciate(network *Network) {
 		return missing
 	}
 
-	//todo neaten up
+	//TODO: neaten up
 	for i := 0; i < len(n.network); i++ {
 		for a := 0; a < len(n.network[i]); a++ {
 			values := make([]float64, n.species)
@@ -201,13 +202,14 @@ func (n *Neat) speciate(network *Network) {
 	}
 }
 
+//TODO: STUFF
 //recieves input in order shortest to longest
 func compareGenome(node int, innovation []int, nodeA int, innovationA []int) float64 {
 	missing := 0
 	for b := 0; b < len(innovation); b++ {
 		ans := sort.SearchInts(innovationA, innovation[b])
 
-		//todo verify default return value
+		//TODO: verify default return value
 		if ans == len(innovationA) {
 			missing++
 		}
@@ -216,7 +218,7 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 	return float64((missing + int(math.Abs(float64(node-nodeA)))) / (len(innovationA) + int((node+nodeA)/2)))
 }
 
-//todo finalize protocol for same species
+//TODO: finalize protocol for same species
 func (n *Neat) checkSpecies() {
 	for i := 0; i < len(n.species); i++ {
 		values := make([]float64, len(n.species))
@@ -251,8 +253,6 @@ func (n *Neat) checkSpecies() {
 	}
 }
 
-//todo test
-//TODO make sure that i am not adding connections twice
 func (n *Neat) mutatePopulation() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	numNet := int(r.Int63n(int64(len(n.network)))-3/5) + 3
@@ -262,7 +262,7 @@ func (n *Neat) mutatePopulation() {
 
 		nodeRange := network.id
 
-		//todo test
+		//TODO: test
 		addConnectionInnovation := func(numTo int, numFrom int) int {
 			ans := n.innovation
 			if len(n.connectionInnovation) <= (n.innovation + 1) {
@@ -287,7 +287,7 @@ func (n *Neat) mutatePopulation() {
 			var secondNode int
 			ans := false
 
-			//todo find a better way to check (for both statements)
+			//TODO: find a better way to check (for both statements)
 			for !ans {
 				firstNode = int(r.Int63n(int64(nodeRange + 1)))
 				secondNode = int(r.Int63n(int64(nodeRange + 1)))
@@ -299,13 +299,13 @@ func (n *Neat) mutatePopulation() {
 				}
 			}
 
-			//todo give actual innovation numbers
+			//TODO: give actual innovation numbers
 			network.mutateNode(firstNode, secondNode, 100, 100)
 			n.species[species].nodeCount++
 
 			addConnectionInnovation(firstNode, secondNode)
 		}
-		//todo fix the casting
+		//TODO: fix the casting
 		if r.Float64() <= n.nodeMutate {
 			nodeMutate()
 		} else {
@@ -333,13 +333,13 @@ func (n *Neat) mutatePopulation() {
 
 			addConnectionInnovation(firstNode, secondNode)
 
-			//todo change the connection number
+			//TODO: change the connection number
 			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))), 100)
 		}
 	}
 }
 
-//todo review when completed
+//TODO: make sure all changes have been made to real method
 func (n *Neat) mutatePopulationTest() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	numNet := int(r.Int63n(int64(len(n.network)))-3/5) + 3
@@ -349,7 +349,7 @@ func (n *Neat) mutatePopulationTest() {
 
 		nodeRange := network.id
 
-		//todo test
+		//TODO: test
 		addConnectionInnovation := func(numTo int, numFrom int) int {
 			ans := n.innovation
 			if len(n.connectionInnovation) <= (n.innovation + 1) {
@@ -374,7 +374,7 @@ func (n *Neat) mutatePopulationTest() {
 			var secondNode int
 			ans := false
 
-			//todo find a better way to check (for both statements)
+			//TODO: find a better way to check (for both statements)
 			for !ans {
 				firstNode = int(r.Int63n(int64(nodeRange + 1)))
 				secondNode = int(r.Int63n(int64(nodeRange + 1)))
@@ -386,13 +386,13 @@ func (n *Neat) mutatePopulationTest() {
 				}
 			}
 
-			//todo give actual innovation numbers
-			network.mutateNode(firstNode, secondNode, 100, 100)
+			//TODO: give actual innovation numbers
+			network.mutateNode(firstNode, secondNode, 25, 25)
 			n.species[species].nodeCount++
 
 			addConnectionInnovation(firstNode, secondNode)
 		}
-		//todo fix the casting
+		//TODO: fix the casting
 		if r.Float64() <= n.nodeMutate {
 			nodeMutate()
 		} else {
@@ -420,8 +420,8 @@ func (n *Neat) mutatePopulationTest() {
 
 			addConnectionInnovation(firstNode, secondNode)
 
-			//todo change the connection number
-			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))), 100)
+			//TODO: change the connection number
+			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))), 25)
 		}
 	}
 }
