@@ -33,13 +33,6 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 		n.connectionInnovation[i] = make([]int, 2)
 	}
 
-	/*REST OF METHOD
-	create species
-	perform initial mutations
-		between 1-3 for each network
-	speciate
-	*/
-
 	for i := 0; i < len(n.network); i++ {
 		n.network[len(n.network)-1-i] = GetNetworkInstance(input, output, i, 0)
 	}
