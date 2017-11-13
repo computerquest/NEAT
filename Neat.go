@@ -24,8 +24,7 @@ type Neat struct {
 	numSpecies           int
 }
 
-//TODO: fix id system
-//TODO: finish
+//TODO: fix id system ?
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7,
 		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, 5)}
@@ -89,6 +88,8 @@ func (n *Neat) mateNetwork(nB Network, nA Network, idNum int) Network {
 
 	return ans
 }
+
+//TODO: why do i have this method
 func (n *Neat) mateSpecies(s *Species) {
 	s.adjustFitness()
 
@@ -110,79 +111,13 @@ func (n *Neat) mateSpecies(s *Species) {
 	}
 }
 
-//rewrite
-/*
-are you comparing every network to every other or are you comparing random geneomes (collection of genes) from last generation of species to each network
-*/
-/*
-could improve the results by:
-creating a custom rep network that generalizes the species (a stereotype if you will)
-pay greater attention to the speciation comparisons and compare values later in case of dispute
-*/
-//TODO: need to make sure that even the connections made when initialized are included in the innovation numbers here
-//TODO: need plan for creating a new species and rearranging species
 //TODO: need a plan for starting a new species
-//TODO: finish
+//TODO: finish/test
 func (n *Neat) speciate(network *Network) {
-	/*repNetworks := make([]*Network, n.species)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	for i := 0; i < len(n.network); i++ {
-		repNetworks[i] = &n.network[i][int(r.Int63n(int64(n.nps)))]
-	}
-
-	newNet := make([][]Network, n.species)
-	for i := 0; i < len(n.network); i++ {
-		newNet[i] = make([]Network, n.nps)
-	}
-
-	calcSpecies := func(inputS []int, inputL []int) int {
-		missing := 0
-		for b := 0; b < len(inputS); b++ {
-			ans := sort.SearchInts(inputL, inputS[b])
-
-			//TODO: find default return value
-			if ans == -1 {
-				missing++
-			}
-		}
-
-		return missing
-	}
-
-	//TODO: neaten up
-	for i := 0; i < len(n.network); i++ {
-		for a := 0; a < len(n.network[i]); a++ {
-			values := make([]float64, n.species)
-
-			for z := 0; z < len(repNetworks); z++ {
-				if len(repNetworks[z].innovation) < len(n.network[i][a].innovation) {
-					values[z] = float64(calcSpecies(repNetworks[z].innovation, n.network[i][a].innovation) / len(n.network[i][a].innovation))
-				} else {
-					values[z] = float64(calcSpecies(n.network[i][a].innovation, repNetworks[z].innovation) / len(repNetworks[z].innovation))
-				}
-
-			}
-			min := 2.0
-			index := 0
-			for b := 0; b < len(values); b++ {
-				if values[b] < min {
-					index = b
-					min = values[b]
-				}
-			}
-
-			newNet[index][len(newNet[index])-1] = n.network[i][a]
-		}
-	}*/
 	values := make([]float64, len(n.species))
 
 	for i := 0; i < len(n.species); i++ {
-		if len(n.species[i].connectionInnovaton) > len(network.innovation) {
-			values[i] = compareGenome(network.id+1, network.innovation, n.species[i].commonNodes, n.species[i].commonConnection)
-		} else {
-			values[i] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, network.id+1, network.innovation)
-		}
+		values[i] = compareGenome(network.id+1, network.innovation, n.species[i].commonNodes, n.species[i].commonConnection)
 	}
 
 	//this should be faster than sorting the whole thing (it also retains position information)
@@ -195,30 +130,43 @@ func (n *Neat) speciate(network *Network) {
 		}
 	}
 
+	//TODO: create new species
 	if lValue < n.speciesThreshold {
 		fmt.Print(index)
 	} else {
-
+		//TODO: need more accurate way to change species (search by id)
+		n.species[network.species] = nil
+		n.species[index].addNetwork(network)
 	}
 }
 
-//TODO: STUFF
 //recieves input in order shortest to longest
 func compareGenome(node int, innovation []int, nodeA int, innovationA []int) float64 {
+	var larger []int
+	var smaller []int
+
+	if len(innovation) > innovationA {
+		larger = innovation
+		smaller = innovationA
+	} else {
+		larger = innovationA
+		smaller = innovation
+	}
+
 	missing := 0
-	for b := 0; b < len(innovation); b++ {
-		ans := sort.SearchInts(innovationA, innovation[b])
+	for b := 0; b < len(larger); b++ {
+		ans := sort.SearchInts(smaller, larger[b])
 
 		//TODO: verify default return value
-		if ans == len(innovationA) {
+		if ans == len(smaller) {
 			missing++
 		}
 	}
 
-	return float64((missing + int(math.Abs(float64(node-nodeA)))) / (len(innovationA) + int((node+nodeA)/2)))
+	return float64((missing + int(math.Abs(float64(node-nodeA)))) / (len(smaller) + int((node+nodeA)/2)))
 }
 
-//TODO: finalize protocol for same species
+//TODO: test
 func (n *Neat) checkSpecies() {
 	for i := 0; i < len(n.species); i++ {
 		values := make([]float64, len(n.species))
@@ -227,11 +175,7 @@ func (n *Neat) checkSpecies() {
 				continue
 			}
 
-			if len(n.species[i].commonConnection) < len(n.species[a].commonConnection) {
-				values[a] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, n.species[a].commonNodes, n.species[a].commonConnection)
-			} else {
-				values[a] = compareGenome(n.species[a].commonNodes, n.species[a].commonConnection, n.species[i].commonNodes, n.species[i].commonConnection)
-			}
+			values[a] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, n.species[a].commonNodes, n.species[a].commonConnection)
 		}
 
 		index := 0
