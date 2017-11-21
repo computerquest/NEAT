@@ -57,8 +57,17 @@ func (s *Species) mateSpecies() {
 		sumFitness += sortedNetwork[i].adjustedFitness
 	}
 
-	for i := 1; i < len(sortedNetwork); i++ {
+	newNets := make([]Network, len(s.network))
+	count := 0
 
+	newNets[0] = s.mutateNetwork(innovate)
+	for i := 1; i < len(sortedNetwork); i++ {
+		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness)
+		for a := 1; a <= numKids; a++ {
+			if sortedNetwork[i+a] != nil {
+				netnets[count] = s.mateNetwork(sortedNetwork[i], sortedNetwork[i+a])
+			}
+		}
 	}
 }
 

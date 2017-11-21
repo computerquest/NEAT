@@ -5,8 +5,8 @@ package main
 type Network struct {
 	nodeList        []Node //master list of nodes
 	numConnections  int
-	innovation      []int //list of inovation numbers this network has (SORTED)
-	id              int //network id
+	innovation      []int   //list of inovation numbers this network has (SORTED)
+	id              int     //network id
 	learningRate    float64 //learning rate for backprop
 	output          []*Node //output nodes
 	input           []*Node //input nodes
@@ -30,14 +30,14 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 
 	//this will calc all the influence
 	for i := 0; i < len(n.output); i++ {
-		n.output[i].setInfluence(n.output[i].value-desired[i])
+		n.output[i].setInfluence(n.output[i].value - desired[i])
 	}
 
 	//actually adjusts the weights
 	for i := 0; i < len(n.nodeList); i++ {
 		derivative := sigmoidDerivative(n.nodeList[i].value)
 		for a := 0; a < len(n.nodeList[i].receive); a++ {
-			n.nodeList[i].receive[a].nextWeight +=  derivative * (n.nodeList[i].receive[a].nodeFrom.value) * n.nodeList[i].influence * n.learningRate
+			n.nodeList[i].receive[a].nextWeight += derivative * (n.nodeList[i].receive[a].nodeFrom.value) * n.nodeList[i].influence * n.learningRate
 		}
 	}
 	//backprop output and hidden
@@ -76,18 +76,28 @@ func (n *Network) getInovation(pos int) int {
 }
 func (n *Network) addInnovation(num int) {
 	if len(n.innovation) <= n.numInnovation+1 {
-		n.innovation = append(n.innovation,  num)
+		n.innovation = append(n.innovation, num)
 	} else {
-		n.innovation[n.numInnovation+1] =  num
+		n.innovation[n.numInnovation+1] = num
 	}
 	n.numInnovation++
+}
+
+func (n *Network) containsInnovation(num int) bool {
+	for i := 0; i < len(n.innovation); i++ {
+		if n.innovation[i] == num {
+			return true
+		}
+	}
+
+	return false
 }
 
 //searches to remove the inovation
 func (n *Network) removeInnovation(num int) {
 	for i := 0; i < len(n.innovation); i++ {
 		if n.innovation[i] == num {
-			n.innovation = append(n.innovation[:i],n.innovation[i+1:]...)
+			n.innovation = append(n.innovation[:i], n.innovation[i+1:]...)
 		}
 	}
 
@@ -97,7 +107,7 @@ func (n *Network) removeInnovation(num int) {
 /*
 change from nodes connection to one with new node
 change to nodes pointer to one sent by by new node
- */
+*/
 func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) int {
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
@@ -128,13 +138,13 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) 
 }
 
 func (n *Network) createNode() *Node {
-	node := Node {value:0, numConOut: 0, numConIn: 0, influenceRecieved: 0, inputRecieved: 0, id:n.id, receive:make([]*Connection, len(n.input)), send:make([]Connection, len(n.output))}
+	node := Node{value: 0, numConOut: 0, numConIn: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, len(n.input)), send: make([]Connection, len(n.output))}
 	n.id++
 
-	if (node.id+1) >= len(n.nodeList) {
-		n.nodeList = append(n.nodeList,  node)
+	if (node.id + 1) >= len(n.nodeList) {
+		n.nodeList = append(n.nodeList, node)
 	} else {
-		n.nodeList[len(n.nodeList)-(1+node.id)] =  node
+		n.nodeList[len(n.nodeList)-(1+node.id)] = node
 	}
 
 	return n.getNode(node.id)
@@ -162,4 +172,3 @@ func GetNetworkInstance(input int, output int, id int, species int) Network {
 func (n *Network) getNode(i int) *Node {
 	return &n.nodeList[len(n.nodeList)-i-1]
 }
-
