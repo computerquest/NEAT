@@ -7,7 +7,7 @@ not going to speciate until after a couple of rounds
 */
 
 //TODO: more robust species id system.
-type Neat struct {
+type kNeat struct {
 	connectMutate        float64   //odds for connection mutation
 	nodeMutate           float64   //odds for node mutation
 	innovation           int       //number of innovations
@@ -76,28 +76,6 @@ func (n *Neat) mateNetwork(nB Network, nA Network, idNum int) Network {
 	}
 
 	return ans
-}
-
-//TODO: why do i have this method
-func (n *Neat) mateSpecies(s *Species) {
-	s.adjustFitness()
-
-	//sorts by adjusted fitness
-	sortedNetwork := make([]*Network, s.numNetwork*85/100)
-	sumFitness := 0.0
-	for i := 0; i < len(s.network); i++ {
-		for a := i; a < len(s.network); a++ {
-			if s.network[i] != nil && s.getNetworkAt(a).adjustedFitness > s.network[i].adjustedFitness {
-				sortedNetwork[i] = s.getNetworkAt(a)
-			}
-		}
-
-		sumFitness += sortedNetwork[i].adjustedFitness
-	}
-
-	for i := 1; i < len(sortedNetwork); i++ {
-
-	}
 }
 
 //TODO: need a plan for starting a new species
@@ -181,6 +159,10 @@ func (n *Neat) checkSpecies() {
 			for a := 0; a < len(currentSpecies); a++ {
 				n.speciate(currentSpecies[a])
 			}
+		}
+
+		if n.species[i].numNetwork == 0 {
+			n.removeSpecies(n.species.id)
 		}
 	}
 }

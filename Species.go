@@ -34,6 +34,34 @@ func (s *Species) adjustFitness() {
 	}
 }
 
+//TODO: finish
+//used to make networks inside a species
+func (s *Species) mateSpecies() {
+	s.adjustFitness()
+
+	//TODO: not the most effiecent and do not need net adjusted fitness
+	//sorts by adjusted fitness
+	sortedNetwork := make([]*Network, s.numNetwork*85/100)
+	sumFitness := 0.0
+	for i := len(s.network); i >= 0; i++ {
+		if s.getNetworkAt(i) == nil {
+			continue
+		}
+
+		for a := len(s.network); a >= len(sortedNetwork)-i-1; a++ {
+			if s.getNetworkAt(a) != nil && s.getNetworkAt(a).adjustedFitness > s.network[i].adjustedFitness {
+				sortedNetwork[i] = s.getNetworkAt(a)
+			}
+		}
+
+		sumFitness += sortedNetwork[i].adjustedFitness
+	}
+
+	for i := 1; i < len(sortedNetwork); i++ {
+
+	}
+}
+
 func (n *Species) mateNetwork(nB Network, nA Network, idNum int) Network {
 	ans := GetNetworkInstance(len(nB.output), len(nB.input), idNum, nB.species)
 
@@ -159,6 +187,7 @@ func (s *Species) removeNetwork(id int) {
 		}
 	}
 
+	s.numNetwork--
 	s.network = append(s.network[:index], s.network[index+1:]...)
 }
 
