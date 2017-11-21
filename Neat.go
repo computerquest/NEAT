@@ -1,17 +1,12 @@
 package main
 
-import (
-	"fmt"
-	"math"
-	"math/rand"
-	"sort"
-	"time"
-)
+import ()
 
 /*
 not going to speciate until after a couple of rounds
 */
 
+//TODO: more robust species id system.
 type Neat struct {
 	connectMutate        float64   //odds for connection mutation
 	nodeMutate           float64   //odds for node mutation
@@ -22,6 +17,7 @@ type Neat struct {
 	networkId            int
 	species              []Species
 	numSpecies           int
+	speciesId            int
 }
 
 //TODO: fix id system ?
@@ -37,9 +33,9 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 		n.network[len(n.network)-1-i] = GetNetworkInstance(input, output, i, 0)
 	}
 
-	n.species[0] = GetSpeciesInstance(100, n.network[0:len(n.network)%5+(numNetworks/5)+1])
+	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)+1])
 	for i, b := len(n.network)%5+(numNetworks/5)+1, 1; i+(numNetworks/5) < len(n.network); i, b = i+(numNetworks/5), b+1 {
-		n.species[b] = GetSpeciesInstance(100, n.network[i:i+(numNetworks/5)])
+		n.createSpecies(n.network[i : i+(numNetworks/5)])
 		//TODO: uncomment when done
 		//n.mutateNetwork()
 	}
@@ -179,7 +175,6 @@ func (n *Neat) checkSpecies() {
 				lValue = values[i]
 			}
 		}
-		fmt.Print(index)
 		if lValue > n.speciesThreshold {
 			currentSpecies := n.species[i].network
 			n.species = append(n.species[:i], n.species[(i+1):]...)
@@ -374,4 +369,30 @@ func (n *Neat) createNewInnovation(values []int) []int {
 
 func (n *Neat) getInnovation(num int) []int {
 	return n.connectionInnovation[len(n.connectionInnovation)-1-num]
+}
+
+//TODO: test
+func (n *Neat) createSpecies(possible []*Network) {
+	s := GetSpeciesInstance(n.speciesId, possible, n.innovation)
+	if n.numSpecies >= len(n.species) {
+		n.species = append(n.species, s)
+	} else {
+		n[len(n.species)-n.numSpecies-1] = s
+	}
+
+	n.numSpecies++
+	n.speciesId++
+}
+
+//TODO: test
+func (n *Neat) removeSpecies(id int) {
+	for i := 0; i < len(n.species); i++ {
+		if n.species[i].id == id {
+			currentSpecies := n.species[i].network
+			s.network = append(s.network[:i], s.network[i+1:]...)
+			for a := 0; a < len(currentSpecies); a++ {
+				n.speciate(currentSpecies[a])
+			}
+		}
+	}
 }
