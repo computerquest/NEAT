@@ -1,7 +1,7 @@
 package main
 
 //NOTE most of the calculating work is networked by nodes inside the struct
-
+//TODO: sort innovationis?
 type Network struct {
 	nodeList        []Node //master list of nodes
 	numConnections  int
@@ -71,6 +71,7 @@ func (n *Network) mutateConnection(from int, to int, innovation int) {
 	n.numConnections++
 }
 
+//get innovation at the position
 func (n *Network) getInovation(pos int) int {
 	return n.innovation[len(n.innovation)-pos-1]
 }

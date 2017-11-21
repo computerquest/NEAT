@@ -4,6 +4,8 @@ import (
 	"sort"
 )
 
+//TODO: might want to consider starting the innovation master list at one so that all of the arrays have a default value (or prevents default value)
+//TODO: look into node id system and make sure that it doesn't allow different types of nodes to have the same id (screw innovation number pairings)
 //TODO: fix the avg because empty slots created by append will screw
 type Species struct {
 	network             []*Network //holds the pointer to all the networks
@@ -68,6 +70,19 @@ func (s *Species) mateSpecies() {
 				netnets[count] = s.mateNetwork(sortedNetwork[i], sortedNetwork[i+a])
 			}
 		}
+	}
+}
+
+//TODO: finish
+func (s *Species) mutateNetwork(n *Network) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	if r.Int63n(101) > 75 {
+		randInov := r.Int63n(int64(len(s.innovationDict)))
+		for !n.containsInnovation(randInov) {
+			randInov := r.Int63n(int64(len(s.innovationDict)))
+		}
+	} else {
 	}
 }
 

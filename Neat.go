@@ -7,7 +7,7 @@ not going to speciate until after a couple of rounds
 */
 
 //TODO: more robust species id system.
-type kNeat struct {
+type Neat struct {
 	connectMutate        float64   //odds for connection mutation
 	nodeMutate           float64   //odds for node mutation
 	innovation           int       //number of innovations
@@ -41,41 +41,6 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	}
 
 	return n
-}
-
-func (n *Neat) mateNetwork(nB Network, nA Network, idNum int) Network {
-	ans := GetNetworkInstance(len(nB.output), len(nB.input), idNum, nB.species)
-
-	var numNode int
-	if nA.id > nB.id {
-		numNode = nA.id
-	} else {
-		numNode = nB.id
-	}
-
-	for i := ans.id; i < numNode; i++ {
-		ans.createNode()
-	}
-
-	for i := 0; i < nA.numInnovation; i++ {
-		ans.mutateConnection(n.getInnovation(nA.getInovation(i))[0], n.getInnovation(nA.getInovation(i))[1], nA.getInovation(i))
-	}
-
-	for i := 0; i < nB.numInnovation; i++ {
-		exist := false
-		for a := 0; a < nA.numInnovation; a++ {
-			if nB.getInovation(i) == nA.getInovation(a) {
-				exist = true
-				break
-			}
-		}
-
-		if !exist {
-			ans.mutateConnection(n.getInnovation(nB.getInovation(i))[0], n.getInnovation(nB.getInovation(i))[1], nB.getInovation(i))
-		}
-	}
-
-	return ans
 }
 
 //TODO: need a plan for starting a new species
