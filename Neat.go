@@ -36,8 +36,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)+1])
 	for i, b := len(n.network)%5+(numNetworks/5)+1, 1; i+(numNetworks/5) < len(n.network); i, b = i+(numNetworks/5), b+1 {
 		n.createSpecies(n.network[i : i+(numNetworks/5)])
-		//TODO: uncomment when done
-		//n.mutateNetwork()
+		n.mutateNetwork()
 	}
 
 	return n
@@ -214,6 +213,14 @@ func (n *Neat) mutatePopulation() {
 
 			//TODO: change the connection number
 			network.mutateConnection(int(r.Int63n(int64(nodeRange+1))), int(r.Int63n(int64(nodeRange+1))), 100)
+		}
+	}
+}
+
+func (n *Neat) start() {
+	for i := 0; i < len(n.species); i++ {
+		if n.species[i] != nil {
+			n.species[i].train()
 		}
 	}
 }

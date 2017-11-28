@@ -18,19 +18,22 @@ type Network struct {
 }
 
 //processes the network
-func (n *Network) Process(input []float64) {
+func (n *Network) Process(input []float32) {
 	for i := 0; i < len(n.input); i++ {
 		n.input[i].setValue(input[i])
 	}
 }
 
 //backpropogates the network to desired one time
-func (n *Network) BackProp(input []float64, desired []float64) {
-	n.Process(input) //need to do so that you are performing the algorithm on that set of values
+func (n *Network) BackProp(input []float32, desired []float32) float32 {
+	n.Process(input) //need to do so that you are perfkorming the algorithm on that set of values
+
+	var error float32
 
 	//this will calc all the influence
 	for i := 0; i < len(n.output); i++ {
 		n.output[i].setInfluence(n.output[i].value - desired[i])
+		error += n.output[i].value - desired[i] //TODO: make sure correct calculation
 	}
 
 	//actually adjusts the weights
@@ -40,27 +43,61 @@ func (n *Network) BackProp(input []float64, desired []float64) {
 			n.nodeList[i].receive[a].nextWeight += derivative * (n.nodeList[i].receive[a].nodeFrom.value) * n.nodeList[i].influence * n.learningRate
 		}
 	}
+
+	return error
 	//backprop output and hidden
 	/*for z := 2; z >= 1; z++ {
-		for i := 0; i < len(n.nodes[z]); i++ {
-			node := n.nodes[z][i]
+	for i := 0; i < len(n.nodes[z]); i++ {
+		node := n.nodes[z][i]
 
-			node.influence = 0
-			derivative := sigmoidDerivative(node.value)
+		node.influence = 0
+		derivative := sigmoidDerivative(node.value)
 
-			if z < 2 {
-				for a := 0; a < len(node.receive); a++ {
-					node.influence += (*node.receive[a].connectInfluence) * (node.receive[a].weight)
-				}
-			} else {
-				node.influence = node.value-desired[i]
-			}
-
+		if z < 2 {
 			for a := 0; a < len(node.receive); a++ {
-				node.receive[a].nextWeight += derivative * (*node.receive[a].sendValue) * node.influence * n.learningRate
+				node.influence += (*node.receive[a].connectInfluence) * (node.receive[a].weight)
+			}
+		} else {
+			node.influence = node.value-desired[i]
+		}
+
+		for a := 0; a < len(node.receive); a++ {
+			node.receive[a].nextWeight += derivative * (*node.receive[a].sendValue) * node.influence * n.learningRate
+		}
+	}
+	}*/
+}
+
+//TODO: test
+func (n *Network) trainSet(input [][]float32, output [][]float32) {
+	errorChange := 1000 //will be percent of error
+
+	for errorChange > .01 {
+		//resets all the next weights
+		for i := 0; i < len(n.nodeList); i++ {
+			if n.nodeList[i] != nil {
+				for a := 0; a < len(n.nodeList[i].send); a++ {
+					if n.nodeList[i].send[a] != nil {
+						n.nodeList[i].send[a].nextWeight = 0
+					}
+				}
 			}
 		}
-	}*/
+		for i := 0; i < len(input); i++ {
+			n.BackProp(input[i], output[i])
+		}
+
+		//updates all the
+		for i := 0; i < len(n.nodeList); i++ {
+			if n.nodeList[i] != nil {
+				for a := 0; a < len(n.nodeList[i].send); a++ {
+					if n.nodeList[i].send[a] != nil {
+						n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight //TODO: make sure correct
+					}
+				}
+			}
+		}
+	}
 }
 
 func (n *Network) mutateConnection(from int, to int, innovation int) {

@@ -36,7 +36,15 @@ func (s *Species) adjustFitness() {
 	}
 }
 
-//TODO: finish
+func (s *Species) trainNetworks(trainingSet [][]float32) {
+	for i := 0; i < len(s.network); i++ {
+		if s.network[i] != nil {
+			s.network[i].BackProp(input, desired)
+		}
+	}
+}
+
+//TODO: test
 //used to make networks inside a species
 func (s *Species) mateSpecies() {
 	s.adjustFitness()
@@ -61,9 +69,7 @@ func (s *Species) mateSpecies() {
 
 	newNets := make([]Network, len(s.network))
 	count := 0
-
-	newNets[0] = s.mutateNetwork(innovate)
-	for i := 1; i < len(sortedNetwork); i++ {
+	for i := 0; i < len(sortedNetwork); i++ {
 		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness)
 		for a := 1; a <= numKids; a++ {
 			if sortedNetwork[i+a] != nil {
@@ -71,19 +77,7 @@ func (s *Species) mateSpecies() {
 			}
 		}
 	}
-}
-
-//TODO: finish
-func (s *Species) mutateNetwork(n *Network) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	if r.Int63n(101) > 75 {
-		randInov := r.Int63n(int64(len(s.innovationDict)))
-		for !n.containsInnovation(randInov) {
-			randInov := r.Int63n(int64(len(s.innovationDict)))
-		}
-	} else {
-	}
+	newNets[int(sortedNetwork[i].adjustedFitness/sumFitness)-1] = sortedNetwork[0] //adds best network back in where the last child for that network
 }
 
 func (n *Species) mateNetwork(nB Network, nA Network, idNum int) Network {

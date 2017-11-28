@@ -8,9 +8,9 @@ import (
 tests :
 retrieving networks
 editing networks
- */
+*/
 func TestGetSpeciesInstance(t *testing.T) {
-	n := make([]Network,10)
+	n := make([]Network, 10)
 	for i := 0; i < len(n); i++ {
 		n[i] = GetNetworkInstance(5, 5, i, 0)
 	}
@@ -95,4 +95,9 @@ func TestRemoveNetwork(t *testing.T) {
 	if s.getNetwork(2) != nil {
 		t.Errorf("didn't remove correctly")
 	}
+}
+
+//TODO: finish testing
+func TestMateSpecies(t *testing.T) {
+
 }
