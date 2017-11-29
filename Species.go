@@ -7,6 +7,7 @@ import (
 //TODO: might want to consider starting the innovation master list at one so that all of the arrays have a default value (or prevents default value)
 //TODO: look into node id system and make sure that it doesn't allow different types of nodes to have the same id (screw innovation number pairings)
 //TODO: fix the avg because empty slots created by append will screw
+//TODO: make sure when mate change the neat class networks
 type Species struct {
 	network             []*Network //holds the pointer to all the networks
 	connectionInnovaton []int      //holds number of occerences of each innovation
@@ -19,7 +20,7 @@ type Species struct {
 }
 
 func GetSpeciesInstance(id int, networks []Network, innovations *[][]int) Species {
-	s := Species{id: id, network: make([]*Network, len(networks)), commonConnection: make([]int, len(innovations)*2), connectionInnovaton: make([]int, len(innovations)*2), commonNodes: 0, nodeCount: 0, numNetwork: len(networks), innovationDict: innovations}
+	s := Species{id: id, network: make([]*Network, len(networks)), commonConnection: make([]int, len(*innovations)*2), connectionInnovaton: make([]int, len(*innovations)*2), commonNodes: 0, nodeCount: 0, numNetwork: len(networks), innovationDict: innovations}
 
 	for i := 0; i < len(networks); i++ {
 		s.network[i] = &networks[i]
@@ -36,17 +37,17 @@ func (s *Species) adjustFitness() {
 	}
 }
 
-func (s *Species) trainNetworks(trainingSet [][]float32) {
+func (s *Species) trainNetworks(trainingSet [][][]float64) {
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i] != nil {
-			s.network[i].BackProp(input, desired)
+			s.network[i].trainSet(trainingSet)
 		}
 	}
 }
 
 //TODO: test
 //used to make networks inside a species
-func (s *Species) mateSpecies() {
+func (s *Species) mateSpecies() []Network {
 	s.adjustFitness()
 
 	//TODO: not the most effiecent and do not need net adjusted fitness
@@ -73,15 +74,21 @@ func (s *Species) mateSpecies() {
 		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness)
 		for a := 1; a <= numKids; a++ {
 			if sortedNetwork[i+a] != nil {
-				netnets[count] = s.mateNetwork(sortedNetwork[i], sortedNetwork[i+a])
+				newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
 			}
 		}
 	}
-	newNets[int(sortedNetwork[i].adjustedFitness/sumFitness)-1] = sortedNetwork[0] //adds best network back in where the last child for that network
+	newNets[int(sortedNetwork[0].adjustedFitness/sumFitness)-1] = *sortedNetwork[0] //adds best network back in where the last child for that network
+
+	for i := 0; i < len(newNets); i++ {
+		newNets[i].id = sortedNetwork[i].id
+	}
+
+	return newNets
 }
 
-func (n *Species) mateNetwork(nB Network, nA Network, idNum int) Network {
-	ans := GetNetworkInstance(len(nB.output), len(nB.input), idNum, nB.species)
+func (n *Species) mateNetwork(nB Network, nA Network) Network {
+	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species)
 
 	var numNode int
 	if nA.id > nB.id {
@@ -116,7 +123,7 @@ func (n *Species) mateNetwork(nB Network, nA Network, idNum int) Network {
 }
 
 func (n *Species) getInnovationRef(num int) []int {
-	return n.innovationDict[len(n.innovationDict)-1-num]
+	return (*n.innovationDict)[len(*n.innovationDict)-1-num]
 }
 
 func (s *Species) updateStereotype() {

@@ -1,6 +1,12 @@
 package main
 
-import ()
+import (
+	"math/rand"
+	"fmt"
+	"sort"
+	"math"
+	"time"
+)
 
 /*
 not going to speciate until after a couple of rounds
@@ -36,7 +42,8 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)+1])
 	for i, b := len(n.network)%5+(numNetworks/5)+1, 1; i+(numNetworks/5) < len(n.network); i, b = i+(numNetworks/5), b+1 {
 		n.createSpecies(n.network[i : i+(numNetworks/5)])
-		n.mutateNetwork()
+		//TODO: uncomment when completed
+		//n.mutateNetwork()
 	}
 
 	return n
@@ -61,12 +68,18 @@ func (n *Neat) speciate(network *Network) {
 		}
 	}
 
+	networkIndex := 0
+	for i := 0; i < len(n.network); i++ {
+		if n.network[i].id == network.id {
+			networkIndex = i
+		}
+	}
 	//TODO: create new species
 	if lValue < n.speciesThreshold {
-		fmt.Print(index)
+		n.createSpecies(n.network[networkIndex:networkIndex+1])
 	} else {
 		//TODO: need more accurate way to change species (search by id)
-		n.species[network.species] = nil
+		n.species[network.species].removeNetwork(network.id)
 		n.species[index].addNetwork(network)
 	}
 }
@@ -76,7 +89,7 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 	var larger []int
 	var smaller []int
 
-	if len(innovation) > innovationA {
+	if len(innovation) > len(innovationA) {
 		larger = innovation
 		smaller = innovationA
 	} else {
@@ -109,11 +122,9 @@ func (n *Neat) checkSpecies() {
 			values[a] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, n.species[a].commonNodes, n.species[a].commonConnection)
 		}
 
-		index := 0
 		lValue := 1000.0
 		for i := 0; i < len(values); i++ {
 			if values[i] < lValue {
-				index = i
 				lValue = values[i]
 			}
 		}
@@ -126,7 +137,7 @@ func (n *Neat) checkSpecies() {
 		}
 
 		if n.species[i].numNetwork == 0 {
-			n.removeSpecies(n.species.id)
+			n.removeSpecies(n.species[i].id)
 		}
 	}
 }
@@ -217,10 +228,24 @@ func (n *Neat) mutatePopulation() {
 	}
 }
 
-func (n *Neat) start() {
+func (n *Neat) start(input [][][]float64) {
 	for i := 0; i < len(n.species); i++ {
-		if n.species[i] != nil {
-			n.species[i].train()
+		if n.species[i].id != 0 {
+			n.species[i].trainNetworks(input)
+		}
+	}
+
+	n.checkSpecies()
+
+	newOveral := make([]Network, len(n.network))
+	count := 0
+	for i := 0; i < len(n.species); i++ {
+		if n.species[i].id != 0 {
+			newNets := n.species[i].mateSpecies()
+			for a := 0; a < len(newNets); a++ {
+				newOveral[count] = newNets[a]
+				count++
+			}
 		}
 	}
 }
@@ -326,12 +351,12 @@ func (n *Neat) getInnovation(num int) []int {
 }
 
 //TODO: test
-func (n *Neat) createSpecies(possible []*Network) {
-	s := GetSpeciesInstance(n.speciesId, possible, n.innovation)
+func (n *Neat) createSpecies(possible []Network) {
+	s := GetSpeciesInstance(n.speciesId, possible, &n.connectionInnovation)
 	if n.numSpecies >= len(n.species) {
 		n.species = append(n.species, s)
 	} else {
-		n[len(n.species)-n.numSpecies-1] = s
+		n.species[len(n.species)-n.numSpecies-1] = s
 	}
 
 	n.numSpecies++
@@ -343,7 +368,7 @@ func (n *Neat) removeSpecies(id int) {
 	for i := 0; i < len(n.species); i++ {
 		if n.species[i].id == id {
 			currentSpecies := n.species[i].network
-			s.network = append(s.network[:i], s.network[i+1:]...)
+			n.species = append(n.species[:i], n.species[i+1:]...)
 			for a := 0; a < len(currentSpecies); a++ {
 				n.speciate(currentSpecies[a])
 			}

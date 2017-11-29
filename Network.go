@@ -18,17 +18,17 @@ type Network struct {
 }
 
 //processes the network
-func (n *Network) Process(input []float32) {
+func (n *Network) Process(input []float64) {
 	for i := 0; i < len(n.input); i++ {
 		n.input[i].setValue(input[i])
 	}
 }
 
 //backpropogates the network to desired one time
-func (n *Network) BackProp(input []float32, desired []float32) float32 {
+func (n *Network) BackProp(input []float64, desired []float64) float64 {
 	n.Process(input) //need to do so that you are perfkorming the algorithm on that set of values
 
-	var error float32
+	var error float64
 
 	//this will calc all the influence
 	for i := 0; i < len(n.output); i++ {
@@ -69,13 +69,16 @@ func (n *Network) BackProp(input []float32, desired []float32) float32 {
 }
 
 //TODO: test
-func (n *Network) trainSet(input [][]float32, output [][]float32) {
-	errorChange := 1000 //will be percent of error
+func (n *Network) trainSet(input [][][]float64) {
+	errorChange := 1000.0 //will be percent of error
+
+	lastError := 1000.0
 
 	for errorChange > .01 {
+		currentError := 0.0
 		//resets all the next weights
 		for i := 0; i < len(n.nodeList); i++ {
-			if n.nodeList[i] != nil {
+			if n.nodeList[i].id != 0 {
 				for a := 0; a < len(n.nodeList[i].send); a++ {
 					if n.nodeList[i].send[a] != nil {
 						n.nodeList[i].send[a].nextWeight = 0
@@ -84,7 +87,7 @@ func (n *Network) trainSet(input [][]float32, output [][]float32) {
 			}
 		}
 		for i := 0; i < len(input); i++ {
-			n.BackProp(input[i], output[i])
+			currentError += n.BackProp(input[i][0], input[i][1])
 		}
 
 		//updates all the
@@ -97,6 +100,9 @@ func (n *Network) trainSet(input [][]float32, output [][]float32) {
 				}
 			}
 		}
+
+		errorChange = currentError-lastError/lastError
+		lastError = currentError
 	}
 }
 
