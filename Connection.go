@@ -9,6 +9,13 @@ type Connection struct{
 	inNumber int
 }
 
+func isRealConnection(c *Connection) bool {
+	if c.nodeFrom == nil {
+		return false
+	}
+
+	return true
+}
 //these act as the middle man between nodes
 func (c *Connection) notifyValue() {
 	c.nodeTo.recieveValue()

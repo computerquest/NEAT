@@ -49,8 +49,6 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	return n
 }
 
-//TODO: need a plan for starting a new species
-//TODO: finish/test
 func (n *Neat) speciate(network *Network) {
 	values := make([]float64, len(n.species))
 
@@ -74,16 +72,23 @@ func (n *Neat) speciate(network *Network) {
 			networkIndex = i
 		}
 	}
-	//TODO: create new species
 	if lValue < n.speciesThreshold {
 		n.createSpecies(n.network[networkIndex:networkIndex+1])
 	} else {
-		//TODO: need more accurate way to change species (search by id)
-		n.species[network.species].removeNetwork(network.id)
+		n.getSpecies(network.species).removeNetwork(network.id)
 		n.species[index].addNetwork(network)
 	}
 }
 
+func (n *Neat) getSpecies(id int) *Species{
+	for i := 0; i < len(n.species); i++{
+		if isRealSpecies(&n.species[i]) && n.species[i].id == id{
+			return &n.species[i]
+		}
+	}
+
+	return nil
+}
 //recieves input in order shortest to longest
 func compareGenome(node int, innovation []int, nodeA int, innovationA []int) float64 {
 	var larger []int
@@ -230,7 +235,7 @@ func (n *Neat) mutatePopulation() {
 
 func (n *Neat) start(input [][][]float64) {
 	for i := 0; i < len(n.species); i++ {
-		if n.species[i].id != 0 {
+		if isRealSpecies(&n.species[i]) {
 			n.species[i].trainNetworks(input)
 		}
 	}
@@ -240,7 +245,7 @@ func (n *Neat) start(input [][][]float64) {
 	newOveral := make([]Network, len(n.network))
 	count := 0
 	for i := 0; i < len(n.species); i++ {
-		if n.species[i].id != 0 {
+		if isRealSpecies(&n.species[i]) {
 			newNets := n.species[i].mateSpecies()
 			for a := 0; a < len(newNets); a++ {
 				newOveral[count] = newNets[a]

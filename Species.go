@@ -87,6 +87,12 @@ func (s *Species) mateSpecies() []Network {
 	return newNets
 }
 
+func isRealSpecies(s *Species) bool {
+	if cap(s.network) != 0{
+		return true
+	}
+	return false
+}
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
 	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species)
 

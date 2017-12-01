@@ -17,6 +17,13 @@ type Node struct {
 	numConOut int
 }
 
+func isRealNode(n *Node) bool {
+	if cap(n.send) != 0 || cap(n.receive) != 0 {
+		return true
+	}
+
+	return false
+}
 //calculate input to this node
 func (n Node) netInput() float64 {
 	var sum float64 = 0

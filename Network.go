@@ -80,7 +80,7 @@ func (n *Network) trainSet(input [][][]float64) {
 		for i := 0; i < len(n.nodeList); i++ {
 			if n.nodeList[i].id != 0 {
 				for a := 0; a < len(n.nodeList[i].send); a++ {
-					if n.nodeList[i].send[a] != nil {
+					if isRealConnection(&n.nodeList[i].send[a]) {
 						n.nodeList[i].send[a].nextWeight = 0
 					}
 				}
@@ -92,9 +92,9 @@ func (n *Network) trainSet(input [][][]float64) {
 
 		//updates all the
 		for i := 0; i < len(n.nodeList); i++ {
-			if n.nodeList[i] != nil {
+			if n.nodeList[i].id != 0 {
 				for a := 0; a < len(n.nodeList[i].send); a++ {
-					if n.nodeList[i].send[a] != nil {
+					if isRealConnection(&n.nodeList[i].send[a]) {
 						n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight //TODO: make sure correct
 					}
 				}
@@ -106,6 +106,13 @@ func (n *Network) trainSet(input [][][]float64) {
 	}
 }
 
+func isRealNetwork(n *Network) bool {
+	if cap(n.nodeList) != 0{
+		return true
+	}
+
+	return false
+}
 func (n *Network) mutateConnection(from int, to int, innovation int) {
 	n.addInnovation(innovation)
 
