@@ -35,7 +35,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	}
 
 	for i := 0; i < len(n.network); i++ {
-		n.network[len(n.network)-1-i] = GetNetworkInstance(input, output, i, 0)
+		n.network[i] = GetNetworkInstance(input, output, i, 0)
 	}
 
 	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)+1])
@@ -341,6 +341,7 @@ func (n *Neat) mutatePopulationTest() {
 	}
 }
 
+//TODO: why? / hasnt been updated for slices
 func (n *Neat) createNewInnovation(values []int) []int {
 	n.innovation++
 	if n.innovation > len(n.connectionInnovation)-1 {
@@ -351,16 +352,17 @@ func (n *Neat) createNewInnovation(values []int) []int {
 }
 
 func (n *Neat) getInnovation(num int) []int {
-	return n.connectionInnovation[len(n.connectionInnovation)-1-num]
+	return n.connectionInnovation[num]
 }
 
 //TODO: test
 func (n *Neat) createSpecies(possible []Network) {
 	s := GetSpeciesInstance(n.speciesId, possible, &n.connectionInnovation)
-	if n.numSpecies >= len(n.species) {
+	if cap(n.species) <= len(n.species) {
 		n.species = append(n.species, s)
 	} else {
-		n.species[len(n.species)-n.numSpecies-1] = s
+		n.species = n.species[0:len(n.species)+1]
+		n.species[len(n.species)-1] = s
 	}
 
 	n.numSpecies++

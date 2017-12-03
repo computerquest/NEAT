@@ -8,6 +8,7 @@ import (
 //TODO: look into node id system and make sure that it doesn't allow different types of nodes to have the same id (screw innovation number pairings)
 //TODO: fix the avg because empty slots created by append will screw
 //TODO: make sure when mate change the neat class networks
+//TODO: make sure that length is always exact
 type Species struct {
 	network             []*Network //holds the pointer to all the networks
 	connectionInnovaton []int      //holds number of occerences of each innovation
@@ -33,6 +34,7 @@ func GetSpeciesInstance(id int, networks []Network, innovations *[][]int) Specie
 
 func (s *Species) adjustFitness() {
 	for i := 0; i < len(s.network); i++ {
+		//TODO:why minus i?
 		s.network[len(s.network)-i].adjustedFitness = s.network[len(s.network)-i].fitness / float64(len(s.network))
 	}
 }
@@ -129,7 +131,7 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 }
 
 func (n *Species) getInnovationRef(num int) []int {
-	return (*n.innovationDict)[len(*n.innovationDict)-1-num]
+	return (*n.innovationDict)[num]
 }
 
 func (s *Species) updateStereotype() {
@@ -175,10 +177,11 @@ func (s *Species) sortInnovation() {
 }
 
 func (s *Species) addNetwork(n *Network) {
-	if len(s.network) <= (s.numNetwork + 1) {
+	if len(s.network) >= cap(s.network) {
 		s.network = append(s.network, n)
 	} else {
-		s.network[len(s.network)-(s.numNetwork+1)] = n
+		s.network = s.network[0:len(s.network)+1]
+		s.network[len(s.network)-1] = n
 	}
 
 	s.numNetwork++
@@ -195,7 +198,7 @@ func (s *Species) getNetwork(id int) *Network {
 }
 
 func (s *Species) getInovOcc(i int) *int {
-	return &s.connectionInnovaton[len(s.connectionInnovaton)-1-i]
+	return &s.connectionInnovaton[i]
 }
 
 func (s *Species) incrementInov(i int) *int {
@@ -223,5 +226,5 @@ func (s *Species) removeNetwork(id int) {
 }
 
 func (s *Species) getNetworkAt(a int) *Network {
-	return s.network[len(s.network)-a-1]
+	return s.network[a]
 }

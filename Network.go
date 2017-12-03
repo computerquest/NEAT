@@ -119,6 +119,7 @@ func isRealNetwork(n *Network) bool {
 
 	return false
 }
+
 func (n *Network) mutateConnection(from int, to int, innovation int) {
 	n.addInnovation(innovation)
 
@@ -129,13 +130,14 @@ func (n *Network) mutateConnection(from int, to int, innovation int) {
 
 //get innovation at the position
 func (n *Network) getInovation(pos int) int {
-	return n.innovation[len(n.innovation)-pos-1]
+	return n.innovation[pos]
 }
 func (n *Network) addInnovation(num int) {
-	if len(n.innovation) <= n.numInnovation+1 {
+	if len(n.innovation) >= cap(n.innovation) {
 		n.innovation = append(n.innovation, num)
 	} else {
-		n.innovation[n.numInnovation+1] = num
+		n.innovation= n.innovation[0:len(n.innovation)+1]
+		n.innovation[len(n.innovation)-1] = num
 	}
 	n.numInnovation++
 }
@@ -198,13 +200,14 @@ func (n *Network) createNode() *Node {
 	node := Node{value: 0, numConOut: 0, numConIn: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, len(n.input)), send: make([]Connection, len(n.output))}
 	n.id++
 
-	if (node.id + 1) >= len(n.nodeList) {
+	if len(n.nodeList) >= cap(n.nodeList) {
 		n.nodeList = append(n.nodeList, node)
 	} else {
-		n.nodeList[len(n.nodeList)-(1+node.id)] = node
+		n.nodeList = n.nodeList[0:len(n.nodeList)+1]
+		n.nodeList[len(n.nodeList)-1] = node
 	}
 
-	return &n.nodeList[len(n.nodeList)-(1+node.id)]
+	return &n.nodeList[len(n.nodeList)-1]
 }
 
 func GetNetworkInstance(input int, output int, id int, species int) Network {

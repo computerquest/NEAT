@@ -24,6 +24,7 @@ func isRealNode(n *Node) bool {
 
 	return false
 }
+
 //calculate input to this node
 func (n Node) netInput() float64 {
 	var sum float64 = 0
@@ -95,7 +96,6 @@ func (n *Node) signalInfluence() {
 func sigmoid(value float64) float64 {
 	return 1 / (1 + (1/math.Pow(2.71, value)))
 }
-
 func sigmoidDerivative(value float64) float64 {
 	return sigmoid(value)*(1 - sigmoid(value))
 }
@@ -104,29 +104,32 @@ func sigmoidDerivative(value float64) float64 {
 could have it so that the add methods will add the pointer to themselves
  */
 func (n *Node) addSendCon(c Connection) *Connection {
-	if len(n.send)-1 > n.numConOut {
-		n.send[len(n.send)-n.numConOut-1] = c
+	if len(n.send) >= cap(n.send) {
+		n.send = append(n.send, c)
 		n.numConOut++
 	} else {
-		n.send = append(n.send, c)
+		n.send = n.send[0:len(n.send)+1]
+		n.send[len(n.send)-1] = c
 	}
 
-	return &n.send[len(n.send)-n.numConOut]
+	return &n.send[len(n.send)-1]
 }
 func (n *Node) addRecCon(c *Connection) *Connection{
-	if len(n.receive)-1 > n.numConIn {
-		n.receive[len(n.receive)-n.numConIn-1] = c
+	if len(n.receive) >= cap(n.receive) {
+		n.receive = append(n.receive, c)
 		n.numConIn++
 	} else {
-		n.receive = append(n.receive, c)
+		n.receive = n.receive[0:len(n.receive)+1]
+		n.receive[len(n.receive)-1] = c
 	}
 
 	return c
 }
+
 func (n *Node) getRecCon(i int) *Connection {
-	return n.receive[len(n.receive)-1-i]
+	return n.receive[i]
 }
 
 func (n *Node) getSendCon(i int) *Connection {
-	return &n.send[len(n.send)-1-i]
+	return &n.send[i]
 }
