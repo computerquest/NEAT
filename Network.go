@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 //NOTE most of the calculating work is networked by nodes inside the struct
 //TODO: sort innovationis?
 type Network struct {
@@ -40,7 +42,9 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 	for i := 0; i < len(n.nodeList); i++ {
 		derivative := sigmoidDerivative(n.nodeList[i].value)
 		for a := 0; a < len(n.nodeList[i].receive); a++ {
-			n.nodeList[i].receive[a].nextWeight += derivative * (n.nodeList[i].receive[a].nodeFrom.value) * n.nodeList[i].influence * n.learningRate
+			if n.nodeList[i].receive[a] != nil {
+				n.nodeList[i].receive[a].nextWeight += derivative * (n.nodeList[i].receive[a].nodeFrom.value) * n.nodeList[i].influence * n.learningRate
+			}
 		}
 	}
 
@@ -70,11 +74,11 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 
 //TODO: test
 func (n *Network) trainSet(input [][][]float64) {
-	errorChange := 1000.0 //will be percent of error
+	errorChange := -1000.0 //will be percent of error
 
 	lastError := 1000.0
 
-	for errorChange > .01 {
+	for errorChange < -.01 {
 		currentError := 0.0
 		//resets all the next weights
 		for i := 0; i < len(n.nodeList); i++ {
@@ -92,7 +96,7 @@ func (n *Network) trainSet(input [][][]float64) {
 
 		//updates all the
 		for i := 0; i < len(n.nodeList); i++ {
-			if n.nodeList[i].id != 0 {
+			if isRealNode(&n.nodeList[i]) {
 				for a := 0; a < len(n.nodeList[i].send); a++ {
 					if isRealConnection(&n.nodeList[i].send[a]) {
 						n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight //TODO: make sure correct
@@ -103,6 +107,8 @@ func (n *Network) trainSet(input [][][]float64) {
 
 		errorChange = currentError-lastError/lastError
 		lastError = currentError
+		fmt.Printf("Current Error: %f percent change: %f", lastError, errorChange)
+		fmt.Println()
 	}
 }
 
@@ -198,11 +204,11 @@ func (n *Network) createNode() *Node {
 		n.nodeList[len(n.nodeList)-(1+node.id)] = node
 	}
 
-	return n.getNode(node.id)
+	return &n.nodeList[len(n.nodeList)-(1+node.id)]
 }
 
 func GetNetworkInstance(input int, output int, id int, species int) Network {
-	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections: 0, nodeList: make([]Node, (input+output)*2), output: make([]*Node, output), input: make([]*Node, input), species: species}
+	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections: 0, nodeList: make([]Node, input+output), output: make([]*Node, output), input: make([]*Node, input), species: species}
 
 	//create output nodes
 	for i := 0; i < output; i++ {

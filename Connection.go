@@ -18,11 +18,15 @@ func isRealConnection(c *Connection) bool {
 }
 //these act as the middle man between nodes
 func (c *Connection) notifyValue() {
-	c.nodeTo.recieveValue()
+	if c.nodeTo != nil {
+		c.nodeTo.recieveValue()
+	}
 }
 
 func (c *Connection) notifyInfluence() {
-	c.nodeFrom.recieveInfluence()
+	if c.nodeFrom != nil {
+		c.nodeFrom.recieveInfluence()
+	}
 }
 
 func GetConnectionInstance(from *Node, to *Node, inNumber int) Connection{

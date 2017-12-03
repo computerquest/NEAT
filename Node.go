@@ -86,7 +86,9 @@ func (n *Node) signalValue() {
 //notifies all connections that the influence has been calculated
 func (n *Node) signalInfluence() {
 	for i := 0; i < len(n.receive); i++ {
-		n.receive[i].notifyInfluence()
+		if n.receive[i] != nil {
+			n.receive[i].notifyInfluence()
+		}
 	}
 }
 
