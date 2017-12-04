@@ -35,7 +35,7 @@ func GetSpeciesInstance(id int, networks []Network, innovations *[][]int) Specie
 func (s *Species) adjustFitness() {
 	for i := 0; i < len(s.network); i++ {
 		//TODO:why minus i?
-		s.network[len(s.network)-i].adjustedFitness = s.network[len(s.network)-i].fitness / float64(len(s.network))
+		s.network[i].adjustedFitness = s.network[i].fitness / float64(len(s.network))
 	}
 }
 
@@ -56,7 +56,7 @@ func (s *Species) mateSpecies() []Network {
 	//sorts by adjusted fitness
 	sortedNetwork := make([]*Network, s.numNetwork*85/100)
 	sumFitness := 0.0
-	for i := len(s.network); i >= 0; i++ {
+	for i := len(s.network); i >= 0; i++ { //TODO: why?
 		if s.getNetworkAt(i) == nil {
 			continue
 		}

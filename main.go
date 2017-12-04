@@ -6,7 +6,7 @@ import (
 
 func main() {
 	//xor
-	data := [][][]float64{
+	/*data := [][][]float64{
 		{
 			{0, 1},
 			{1},
@@ -67,5 +67,16 @@ func main() {
 	fmt.Println(networkA.Process(dataA[0][0]))
 	fmt.Println(network.Process(data[0][0]), network.Process(data[1][0]), network.Process(data[2][0]))
 
-	fmt.Print("works")
+	fmt.Print("works")*/
+
+	dataA := [][][]float64{
+		{
+			{.05, .1},
+			{.01, .99},
+		},
+	}
+
+	neat := GetNeatInstance(5, 2, 2)
+	neat.start(dataA)
+	fmt.Println("finsihed")
 }

@@ -28,7 +28,7 @@ type Neat struct {
 //TODO: fix id system ?
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7,
-		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, 5)}
+		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 10), species: make([]Species, 0, 5)}
 
 	for i := 0; i < len(n.connectionInnovation); i++ {
 		n.connectionInnovation[i] = make([]int, 2)
