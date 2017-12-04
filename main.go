@@ -76,7 +76,7 @@ func main() {
 		},
 	}
 
-	neat := GetNeatInstance(5, 2, 2)
+	neat := GetNeatInstance(15, 2, 2)
 	neat.start(dataA)
 	fmt.Println("finsihed")
 }

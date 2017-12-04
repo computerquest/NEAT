@@ -55,26 +55,32 @@ func (s *Species) mateSpecies() []Network {
 	//TODO: not the most effiecent and do not need net adjusted fitness
 	//sorts by adjusted fitness
 	sortedNetwork := make([]*Network, s.numNetwork*85/100)
+	lastValue := 0.0
 	sumFitness := 0.0
-	for i := len(s.network); i >= 0; i++ { //TODO: why?
+	for i := 0; i < len(sortedNetwork); i++ { //TODO: why
 		if s.getNetworkAt(i) == nil {
 			continue
 		}
 
-		for a := len(s.network); a >= len(sortedNetwork)-i-1; a++ {
-			if s.getNetworkAt(a) != nil && s.getNetworkAt(a).adjustedFitness > s.network[i].adjustedFitness {
-				sortedNetwork[i] = s.getNetworkAt(a)
+		localMax := 0.0
+		localIndex := 0
+		for a := 0; a < len(s.network); a++ {
+			if s.getNetworkAt(a) != nil && s.getNetworkAt(a).adjustedFitness > localMax && s.getNetworkAt(a).adjustedFitness < lastValue {
+				localMax = s.network[a].adjustedFitness
+				localIndex = a
 			}
 		}
 
+		sortedNetwork[i] = s.getNetworkAt(localIndex)
 		sumFitness += sortedNetwork[i].adjustedFitness
+		lastValue = sortedNetwork[i].adjustedFitness
 	}
 
 	newNets := make([]Network, len(s.network))
 	count := 0
 	for i := 0; i < len(sortedNetwork); i++ {
 		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness)
-		for a := 1; a <= numKids; a++ {
+		for a := 1; a <= numKids && a+numKids < len(sortedNetwork); a++ {
 			if sortedNetwork[i+a] != nil {
 				newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
 			}

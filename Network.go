@@ -124,6 +124,7 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		}
 	}
 
+	n.fitness = 1/lastError //TODO: could be bad
 	return lastError
 }
 
@@ -150,6 +151,11 @@ func (n *Network) mutateConnection(from int, to int, innovation int) {
 func (n *Network) getInovation(pos int) int {
 	return n.innovation[pos]
 }
+
+func (n *Network) getNextNodeId() int {
+	return n.id
+}
+
 func (n *Network) addInnovation(num int) {
 	if len(n.innovation) >= cap(n.innovation) {
 		n.innovation = append(n.innovation, num)
