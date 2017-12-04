@@ -27,6 +27,21 @@ func isRealNode(n *Node) bool {
 	return false
 }
 
+func isInput(n *Node) bool {
+	if len(n.receive) == 0 {
+		return true
+	}
+
+	return false
+}
+
+func isOutput(n *Node) bool {
+	if len(n.send) == 0 {
+		return true
+	}
+
+	return false
+}
 //calculate input to this node
 func (n Node) netInput() float64 {
 	var sum float64 = 0

@@ -34,7 +34,6 @@ func GetSpeciesInstance(id int, networks []Network, innovations *[][]int) Specie
 
 func (s *Species) adjustFitness() {
 	for i := 0; i < len(s.network); i++ {
-		//TODO:why minus i?
 		s.network[i].adjustedFitness = s.network[i].fitness / float64(len(s.network))
 	}
 }
@@ -79,24 +78,31 @@ func (s *Species) mateSpecies() []Network {
 	newNets := make([]Network, len(s.network))
 	count := 0
 	for i := 0; i < len(sortedNetwork); i++ {
-		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness)
-		for a := 1; a <= numKids && a+numKids < len(sortedNetwork); a++ {
+		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness * float64(len(newNets)))
+		numMade := numKids
+		for a := 1; a <= numKids && a+i < len(sortedNetwork); a++ {
 			if sortedNetwork[i+a] != nil {
 				newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
+				numMade--
 			}
 		}
+
+		//TODO: finish so that all the kids are made
+		/*for numMade > 0 {
+			newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
+		}*/
 	}
-	newNets[int(sortedNetwork[0].adjustedFitness/sumFitness)-1] = *sortedNetwork[0] //adds best network back in where the last child for that network
+	newNets[int(sortedNetwork[0].adjustedFitness/sumFitness*float64(len(newNets))-float64(1))] = *sortedNetwork[0] //adds best network back in where the last child for that network
 
 	for i := 0; i < len(newNets); i++ {
-		newNets[i].id = sortedNetwork[i].id
+		newNets[i].id = s.network[i].id
 	}
 
 	return newNets
 }
 
 func isRealSpecies(s *Species) bool {
-	if cap(s.network) != 0{
+	if cap(s.network) != 0 {
 		return true
 	}
 	return false
@@ -204,6 +210,10 @@ func (s *Species) getNetwork(id int) *Network {
 }
 
 func (s *Species) getInovOcc(i int) *int {
+	if i >= len(s.connectionInnovaton) {
+		insert := make([]int, 1+i-len(s.connectionInnovaton))
+		s.connectionInnovaton = append(s.connectionInnovaton, insert...)
+	}
 	return &s.connectionInnovaton[i]
 }
 
