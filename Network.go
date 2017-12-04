@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 
+//100 NODE MAX!!!!!!!!!!!!!!!
 //NOTE most of the calculating work is networked by nodes inside the struct
 //TODO: sort innovationis?
 type Network struct {
@@ -20,10 +21,17 @@ type Network struct {
 }
 
 //processes the network
-func (n *Network) Process(input []float64) {
+func (n *Network) Process(input []float64) []float64 {
 	for i := 0; i < len(n.input); i++ {
 		n.input[i].setValue(input[i])
 	}
+
+	ans := make([]float64, len(n.output))
+	for i := 0; i < len(n.output); i++ {
+		ans[i] = n.output[i].value
+	}
+
+	return ans
 }
 
 //backpropogates the network to desired one time
@@ -73,12 +81,12 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 }
 
 //TODO: test
-func (n *Network) trainSet(input [][][]float64) {
+func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 	errorChange := -1000.0 //will be percent of error
 
 	lastError := 1000.0
-
-	for errorChange < -.01 {
+	strikes := 10
+	for z := 1; strikes > 0 && lastError > .00000000001 && z < lim; z++ {
 		currentError := 0.0
 		//resets all the next weights
 		for i := 0; i < len(n.nodeList); i++ {
@@ -90,6 +98,7 @@ func (n *Network) trainSet(input [][][]float64) {
 				}
 			}
 		}
+
 		for i := 0; i < len(input); i++ {
 			currentError += n.BackProp(input[i][0], input[i][1])
 		}
@@ -105,11 +114,17 @@ func (n *Network) trainSet(input [][][]float64) {
 			}
 		}
 
-		errorChange = currentError-lastError/lastError
-		lastError = currentError
-		fmt.Printf("Current Error: %f percent change: %f", lastError, errorChange)
+		errorChange = (currentError - lastError) / lastError
+		fmt.Printf("Gen: %d Current Error: %e avg: %e change: %e percent change: %f", z, currentError, currentError/float64(len(input)), currentError-lastError, errorChange)
 		fmt.Println()
+		lastError = currentError
+
+		if errorChange > -.01 {
+			//strikes--
+		}
 	}
+
+	return lastError
 }
 
 func isRealNetwork(n *Network) bool {
@@ -121,6 +136,9 @@ func isRealNetwork(n *Network) bool {
 }
 
 func (n *Network) mutateConnection(from int, to int, innovation int) {
+	c := n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(from), n.getNode(to), innovation))
+	n.getNode(to).addRecCon(c)
+
 	n.addInnovation(innovation)
 
 	n.getNode(to).numConIn++
@@ -197,7 +215,7 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) 
 }
 
 func (n *Network) createNode() *Node {
-	node := Node{value: 0, numConOut: 0, numConIn: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, len(n.input)), send: make([]Connection, len(n.output))}
+	node := Node{value: 0, numConOut: 0, numConIn: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, 0), send: make([]Connection, 0, 100)}
 	n.id++
 
 	if len(n.nodeList) >= cap(n.nodeList) {
@@ -210,8 +228,8 @@ func (n *Network) createNode() *Node {
 	return &n.nodeList[len(n.nodeList)-1]
 }
 
-func GetNetworkInstance(input int, output int, id int, species int) Network {
-	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: .1, numConnections: 0, nodeList: make([]Node, input+output), output: make([]*Node, output), input: make([]*Node, input), species: species}
+func GetNetworkInstance(input int, output int, id int, species int, learningRate float64) Network {
+	n := Network{numInnovation: 0, networkId: id, id: 0, learningRate: learningRate, numConnections: 0, nodeList: make([]Node, 0, 100), output: make([]*Node, output), input: make([]*Node, input), species: species}
 
 	//create output nodes
 	for i := 0; i < output; i++ {
@@ -230,5 +248,5 @@ func GetNetworkInstance(input int, output int, id int, species int) Network {
 }
 
 func (n *Network) getNode(i int) *Node {
-	return &n.nodeList[len(n.nodeList)-i-1]
+	return &n.nodeList[i]
 }

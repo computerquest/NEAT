@@ -1,5 +1,8 @@
 package main
 
+import (
+	"math/rand"
+)
 type Connection struct{
 	weight float64
 	disable bool
@@ -30,5 +33,5 @@ func (c *Connection) notifyInfluence() {
 }
 
 func GetConnectionInstance(from *Node, to *Node, inNumber int) Connection{
-	return Connection{weight: 1, disable: false, nextWeight: 0, nodeTo: to, nodeFrom: from, inNumber: inNumber}
+	return Connection{weight: rand.Float64()*.2 + .4, disable: false, nextWeight: 0, nodeTo: to, nodeFrom: from, inNumber: inNumber}
 }

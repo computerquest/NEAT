@@ -35,7 +35,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	}
 
 	for i := 0; i < len(n.network); i++ {
-		n.network[i] = GetNetworkInstance(input, output, i, 0)
+		n.network[i] = GetNetworkInstance(input, output, i, 0, .1)
 	}
 
 	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)+1])

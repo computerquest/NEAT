@@ -4,6 +4,8 @@ import (
 	"math"
 )
 
+//MAX 100 CONNECTIONS
+
 type Node struct {
 	value float64
 	id int
@@ -55,14 +57,12 @@ func (n *Node) recieveInfluence() {
 	if n.influenceRecieved == len(n.send) {
 		n.influence = 0
 		for i := 0; i < len(n.send); i++ {
-			sumInfluence := 0.0
 			if ! n.send[i].disable {
-				sumInfluence += n.send[i].nodeTo.influence * n.send[i].weight
+				n.influence += n.send[i].nodeTo.influence * n.send[i].weight
 			}
 
-			n.setInfluence(sumInfluence)
 		}
-
+		n.setInfluence(n.influence)
 		n.influenceRecieved = 0
 	}
 }

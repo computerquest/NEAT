@@ -42,7 +42,7 @@ func (s *Species) adjustFitness() {
 func (s *Species) trainNetworks(trainingSet [][][]float64) {
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i] != nil {
-			s.network[i].trainSet(trainingSet)
+			s.network[i].trainSet(trainingSet, 1500)
 		}
 	}
 }
@@ -96,7 +96,7 @@ func isRealSpecies(s *Species) bool {
 	return false
 }
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
-	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species)
+	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species, .1)
 
 	var numNode int
 	if nA.id > nB.id {
