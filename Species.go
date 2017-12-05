@@ -83,6 +83,7 @@ func (s *Species) mateSpecies() []Network {
 		for a := 1; a <= numKids && a+i < len(sortedNetwork); a++ {
 			if sortedNetwork[i+a] != nil {
 				newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
+				count++
 				numMade--
 			}
 		}
@@ -95,7 +96,7 @@ func (s *Species) mateSpecies() []Network {
 	newNets[int(sortedNetwork[0].adjustedFitness/sumFitness*float64(len(newNets))-float64(1))] = *sortedNetwork[0] //adds best network back in where the last child for that network
 
 	for i := 0; i < len(newNets); i++ {
-		newNets[i].id = s.network[i].id
+		newNets[i].networkId = s.network[i].networkId
 	}
 
 	return newNets
@@ -121,13 +122,13 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 		ans.createNode()
 	}
 
-	for i := 0; i < nA.numInnovation; i++ {
+	for i := 0; i < len(nA.innovation); i++ {
 		ans.mutateConnection(n.getInnovationRef(nA.getInovation(i))[0], n.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
 	}
 
-	for i := 0; i < nB.numInnovation; i++ {
+	for i := 0; i < len(nB.innovation); i++ {
 		exist := false
-		for a := 0; a < nA.numInnovation; a++ {
+		for a := 0; a < len(nA.innovation); a++ {
 			if nB.getInovation(i) == nA.getInovation(a) {
 				exist = true
 				break
@@ -192,7 +193,7 @@ func (s *Species) addNetwork(n *Network) {
 	if len(s.network) >= cap(s.network) {
 		s.network = append(s.network, n)
 	} else {
-		s.network = s.network[0:len(s.network)+1]
+		s.network = s.network[0 : len(s.network)+1]
 		s.network[len(s.network)-1] = n
 	}
 
