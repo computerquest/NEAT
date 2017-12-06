@@ -82,7 +82,6 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 	}*/
 }
 
-//TODO: test
 func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 	errorChange := -1000.0 //will be percent of error
 
@@ -126,12 +125,12 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		}
 	}
 
-	n.fitness = 1/lastError //TODO: could be bad
+	n.fitness = 1 / lastError //TODO: could be bad
 	return lastError
 }
 
 func isRealNetwork(n *Network) bool {
-	if cap(n.nodeList) != 0{
+	if cap(n.nodeList) != 0 {
 		return true
 	}
 
@@ -162,7 +161,7 @@ func (n *Network) addInnovation(num int) {
 	if len(n.innovation) >= cap(n.innovation) {
 		n.innovation = append(n.innovation, num)
 	} else {
-		n.innovation= n.innovation[0:len(n.innovation)+1]
+		n.innovation = n.innovation[0 : len(n.innovation)+1]
 		n.innovation[len(n.innovation)-1] = num
 	}
 	n.numInnovation++
@@ -193,19 +192,18 @@ func (n *Network) removeInnovation(num int) {
 change from nodes connection to one with new node
 change to nodes pointer to one sent by by new node
 */
-func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int, removeInnovation int) int {
+func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int) int {
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
 	newNode := n.createNode()
 
-	n.removeInnovation(removeInnovation)
-	n.addInnovation(innovatonA)
+	n.addInnovation(innovationA)
 	n.addInnovation(innovationB)
 
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
 		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
-			toNode.receive[i] = newNode.addSendCon(GetConnectionInstance(newNode, toNode, innovatonA))
+			toNode.receive[i] = newNode.addSendCon(GetConnectionInstance(newNode, toNode, innovationB))
 		}
 	}
 	//todo find a better way?
@@ -214,7 +212,7 @@ func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int, 
 			fromNode.send[i].nodeTo = newNode
 
 			n.removeInnovation(fromNode.send[i].inNumber)
-			fromNode.send[i].inNumber = innovationB
+			fromNode.send[i].inNumber = innovationA
 
 			newNode.addRecCon(&fromNode.send[i])
 		}
@@ -230,7 +228,7 @@ func (n *Network) createNode() *Node {
 	if len(n.nodeList) >= cap(n.nodeList) {
 		n.nodeList = append(n.nodeList, node)
 	} else {
-		n.nodeList = n.nodeList[0:len(n.nodeList)+1]
+		n.nodeList = n.nodeList[0 : len(n.nodeList)+1]
 		n.nodeList[len(n.nodeList)-1] = node
 	}
 

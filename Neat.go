@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"sort"
 	"time"
-	"fmt"
 )
 
 //MAX 1000 innovation
@@ -44,7 +44,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	}
 
 	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)])
-	for i := len(n.network)%5+(numNetworks/5); i+(numNetworks/5) <= len(n.network); i+= (numNetworks/5){
+	for i := len(n.network)%5 + (numNetworks / 5); i+(numNetworks/5) <= len(n.network); i += (numNetworks / 5) {
 		n.createSpecies(n.network[i : i+(numNetworks/5)])
 		n.mutatePopulation()
 	}
@@ -119,7 +119,7 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 	return float64((missing + int(math.Abs(float64(node-nodeA)))) / (len(smaller) + int((node+nodeA)/2)))
 }
 
-func (n *Neat) findInnovationNum(search []int ) int {
+func (n *Neat) findInnovationNum(search []int) int {
 	for i := 0; i < len(n.connectionInnovation); i++ {
 		if n.connectionInnovation[i][0] == search[0] && n.connectionInnovation[i][1] == search[1] {
 			return i
@@ -209,8 +209,8 @@ func (n *Neat) mutatePopulation() {
 
 			//TODO: give actual innovation numbers
 			a := addConnectionInnovation(firstNode, network.getNextNodeId())
-			b:= addConnectionInnovation(network.getNextNodeId(), secondNode)
-			network.mutateNode(firstNode, secondNode, a, b, n.findInnovationNum([]int{firstNode, secondNode}))
+			b := addConnectionInnovation(network.getNextNodeId(), secondNode)
+			network.mutateNode(firstNode, secondNode, a, b)
 			n.species[species].nodeCount++
 		}
 		//addConnectionInnovation(firstNode, secondNode)
@@ -299,7 +299,7 @@ func (n *Neat) printNeat() {
 
 				fmt.Print("receive: ")
 				for c := 0; c < len(n.species[i].network[a].nodeList[b].receive); c++ {
-					fmt.Print(n.species[i].network[a].nodeList[b].receive[c].nodeFrom.id," ")
+					fmt.Print(n.species[i].network[a].nodeList[b].receive[c].nodeFrom.id, " ")
 				}
 
 				fmt.Println()
@@ -307,6 +307,7 @@ func (n *Neat) printNeat() {
 		}
 	}
 }
+
 /*//TODO: make sure all changes have been made to real method
 func (n *Neat) mutatePopulationTest() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
