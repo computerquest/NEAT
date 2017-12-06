@@ -42,8 +42,8 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 		n.network[i] = GetNetworkInstance(input, output, i, 0, .1)
 	}
 
-	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)+1])
-	for i, b := len(n.network)%5+(numNetworks/5)+1, 1; i+(numNetworks/5) < len(n.network); i, b = i+(numNetworks/5), b+1 {
+	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)])
+	for i := len(n.network)%5+(numNetworks/5); i+(numNetworks/5) <= len(n.network); i+= (numNetworks/5){
 		n.createSpecies(n.network[i : i+(numNetworks/5)])
 		n.mutatePopulation()
 	}
@@ -197,7 +197,9 @@ func (n *Neat) mutatePopulation() {
 			secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
 
 			//TODO: give actual innovation numbers
-			network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode))
+			a := addConnectionInnovation(firstNode, network.getNextNodeId())
+			b:= addConnectionInnovation(network.getNextNodeId(), secondNode)
+			network.mutateNode(firstNode, secondNode, a, b)
 			n.species[species].nodeCount++
 		}
 		//addConnectionInnovation(firstNode, secondNode)
@@ -207,9 +209,9 @@ func (n *Neat) mutatePopulation() {
 		} else {
 			var firstNode int
 			var secondNode int
-			ans := false
+			ans := true
 			attempts := 0
-			for !ans && attempts <= 5 {
+			for ans && attempts <= 5 {
 				firstNode = int(r.Int63n(int64(nodeRange)))
 				secondNode = int(r.Int63n(int64(nodeRange)))
 
@@ -236,10 +238,12 @@ func (n *Neat) mutatePopulation() {
 
 			//addConnectionInnovation(firstNode, secondNode)
 
-			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
+			e := addConnectionInnovation(firstNode, secondNode)
+			network.mutateConnection(firstNode, secondNode, e)
 		}
 	}
 }
+
 func (n *Neat) start(input [][][]float64) {
 	for i := 0; i < len(n.species); i++ {
 		if isRealSpecies(&n.species[i]) {
