@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"sort"
 	"time"
+	"fmt"
 )
 
 //MAX 1000 innovation
@@ -28,7 +29,7 @@ type Neat struct {
 
 //TODO: fix id system ?
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
-	n := Neat{innovation: 0, connectMutate: .7,
+	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .1,
 		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
 
 	//TODO: make sure correct
@@ -118,6 +119,16 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 	return float64((missing + int(math.Abs(float64(node-nodeA)))) / (len(smaller) + int((node+nodeA)/2)))
 }
 
+func (n *Neat) findInnovationNum(search []int ) int {
+	for i := 0; i < len(n.connectionInnovation); i++ {
+		if n.connectionInnovation[i][0] == search[0] && n.connectionInnovation[i][1] == search[1] {
+			return i
+		}
+	}
+
+	return -1
+}
+
 //TODO: test
 func (n *Neat) checkSpecies() {
 	for i := 0; i < len(n.species); i++ {
@@ -199,7 +210,7 @@ func (n *Neat) mutatePopulation() {
 			//TODO: give actual innovation numbers
 			a := addConnectionInnovation(firstNode, network.getNextNodeId())
 			b:= addConnectionInnovation(network.getNextNodeId(), secondNode)
-			network.mutateNode(firstNode, secondNode, a, b)
+			network.mutateNode(firstNode, secondNode, a, b, n.findInnovationNum([]int{firstNode, secondNode}))
 			n.species[species].nodeCount++
 		}
 		//addConnectionInnovation(firstNode, secondNode)
@@ -266,6 +277,36 @@ func (n *Neat) start(input [][][]float64) {
 	}
 }
 
+func (n *Neat) printNeat() {
+	fmt.Println()
+	fmt.Println()
+	for i := 0; i < len(n.species); i++ {
+		fmt.Println("species id: ", n.species[i].id)
+		for a := 0; a < len(n.species[i].network); a++ {
+			fmt.Println("network id: ", n.species[i].network[a].networkId, " species id: ", n.species[i].network[a].species)
+
+			fmt.Print("expected connection: ", n.species[i].network[a].innovation)
+			for b := 0; b < len(n.species[i].network[a].innovation); b++ {
+				fmt.Print(n.getInnovation(n.species[i].network[a].innovation[b]))
+			}
+			fmt.Println()
+
+			for b := 0; b < len(n.species[i].network[a].nodeList); b++ {
+				fmt.Print("node: ", n.species[i].network[a].nodeList[b].id, " sending: ")
+				for c := 0; c < len(n.species[i].network[a].nodeList[b].send); c++ {
+					fmt.Print(n.species[i].network[a].nodeList[b].send[c].nodeTo.id, " ")
+				}
+
+				fmt.Print("receive: ")
+				for c := 0; c < len(n.species[i].network[a].nodeList[b].receive); c++ {
+					fmt.Print(n.species[i].network[a].nodeList[b].receive[c].nodeFrom.id," ")
+				}
+
+				fmt.Println()
+			}
+		}
+	}
+}
 /*//TODO: make sure all changes have been made to real method
 func (n *Neat) mutatePopulationTest() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))

@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 //100 NODE MAX!!!!!!!!!!!!!!!
 //NOTE most of the calculating work is networked by nodes inside the struct
@@ -191,11 +193,12 @@ func (n *Network) removeInnovation(num int) {
 change from nodes connection to one with new node
 change to nodes pointer to one sent by by new node
 */
-func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int) int {
+func (n *Network) mutateNode(from int, to int, innovatonA int, innovationB int, removeInnovation int) int {
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
 	newNode := n.createNode()
 
+	n.removeInnovation(removeInnovation)
 	n.addInnovation(innovatonA)
 	n.addInnovation(innovationB)
 
