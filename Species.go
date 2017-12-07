@@ -9,6 +9,7 @@ import (
 //TODO: fix the avg because empty slots created by append will screw
 //TODO: make sure when mate change the neat class networks
 //TODO: make sure that length is always exact
+//TODO: when passing back the new species networks to Neat make sure the pointers (in species) are updated as well
 type Species struct {
 	network             []*Network //holds the pointer to all the networks
 	connectionInnovaton []int      //holds number of occerences of each innovation
@@ -109,6 +110,7 @@ func isRealSpecies(s *Species) bool {
 	}
 	return false
 }
+
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
 	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species, .1)
 

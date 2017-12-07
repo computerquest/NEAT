@@ -12,8 +12,7 @@ import (
 /*
 not going to speciate until after a couple of rounds
 */
-//TODO: make sure the ids that are removed when nodes mutated
-//TODO: more robust species id system.
+
 type Neat struct {
 	connectMutate        float64   //odds for connection mutation
 	nodeMutate           float64   //odds for node mutation
@@ -27,7 +26,6 @@ type Neat struct {
 	speciesId            int
 }
 
-//TODO: fix id system ?
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .01,
 		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
@@ -71,14 +69,18 @@ func (n *Neat) speciate(network *Network) {
 
 	networkIndex := 0
 	for i := 0; i < len(n.network); i++ {
-		if n.network[i].id == network.id {
+		if n.network[i].networkId == network.networkId {
 			networkIndex = i
 		}
 	}
+
 	if lValue < n.speciesThreshold {
 		n.createSpecies(n.network[networkIndex : networkIndex+1])
 	} else {
-		//n.getSpecies(network.species).removeNetwork(network.networkId) already done when species deleted from slice
+		spec := n.getSpecies(network.species)
+		if spec != nil {
+			spec.removeNetwork(network.networkId)
+		}
 		n.species[index].addNetwork(network)
 	}
 }
@@ -112,7 +114,7 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 		}
 	}
 
-	return float64(missing + int(math.Abs(float64(node-nodeA)))) / (float64(len(smaller)) + float64((node+nodeA)/2))
+	return float64(missing+int(math.Abs(float64(node-nodeA)))) / (float64(len(smaller)) + float64((node+nodeA)/2))
 }
 
 func (n *Neat) findInnovationNum(search []int) int {
@@ -326,7 +328,6 @@ func (n *Neat) createSpecies(possible []Network) {
 	n.speciesId++
 }
 
-//TODO: test
 func (n *Neat) removeSpecies(id int) {
 	for i := 0; i < len(n.species); i++ {
 		if n.species[i].id == id {
