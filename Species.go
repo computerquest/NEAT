@@ -98,6 +98,8 @@ func (s *Species) mateSpecies() []Network {
 		newNets[i].networkId = s.network[i].networkId
 	}
 
+	s.updateStereotype()
+
 	return newNets
 }
 
@@ -157,11 +159,12 @@ func (s *Species) updateStereotype() {
 	for i := 0; i < len(s.commonConnection); i++ {
 		s.commonConnection[i] = 0
 	}
+
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i] != nil {
 			numNodes += s.network[i].id + 1
 			for a := 0; a < len(s.network[i].innovation); a++ {
-				s.connectionInnovaton[s.network[i].innovation[a]]++
+				s.incrementInov(s.network[i].innovation[a])
 			}
 		}
 	}
@@ -213,6 +216,7 @@ func (s *Species) getInovOcc(i int) *int {
 	if i >= len(s.connectionInnovaton) {
 		insert := make([]int, 1+i-len(s.connectionInnovaton))
 		s.connectionInnovaton = append(s.connectionInnovaton, insert...)
+		s.commonConnection = append(s.commonConnection, insert...)
 	}
 	return &s.connectionInnovaton[i]
 }
@@ -220,12 +224,21 @@ func (s *Species) getInovOcc(i int) *int {
 func (s *Species) incrementInov(i int) *int {
 	ans := s.getInovOcc(i)
 	*ans++
+
+	if float64(s.connectionInnovaton[i]/len(s.network)) > .6 {
+		s.commonConnection[i] = 1
+	}
 	return ans
 }
 
 func (s *Species) reduceInov(i int) *int {
 	ans := s.getInovOcc(i)
 	*ans--
+
+	if float64(s.connectionInnovaton[i]/len(s.network)) <= .6 {
+		s.commonConnection[i] = 0
+	}
+
 	return ans
 }
 
