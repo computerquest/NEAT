@@ -46,7 +46,6 @@ func (s *Species) trainNetworks(trainingSet [][][]float64) {
 	}
 }
 
-//TODO: test
 //used to make networks inside a species
 func (s *Species) mateSpecies() []Network {
 	s.adjustFitness()
