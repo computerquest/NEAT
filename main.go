@@ -78,8 +78,12 @@ func main() {
 
 	neat := GetNeatInstance(15, 2, 2)
 
-	for i := 50; i >= 0; i-- {
+	for i := 1000; i >= 0; i-- {
 		neat.start(dataA)
+
+		if i%5 == 0 {
+			neat.speciateAll()
+		}
 	}
 
 	neat.printNeat()

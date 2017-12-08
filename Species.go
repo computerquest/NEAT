@@ -201,6 +201,8 @@ func (s *Species) addNetwork(n *Network) {
 		s.network[len(s.network)-1] = n
 	}
 
+	n.species = s.id
+
 	s.numNetwork++
 }
 

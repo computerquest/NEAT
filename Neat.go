@@ -44,10 +44,19 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)])
 	for i := len(n.network)%5 + (numNetworks / 5); i+(numNetworks/5) <= len(n.network); i += (numNetworks / 5) {
 		n.createSpecies(n.network[i : i+(numNetworks/5)])
-		n.mutatePopulation()
 	}
 
+	n.mutatePopulation()
+	n.speciateAll()
+	n.checkSpecies()
+
 	return n
+}
+
+func (n *Neat) speciateAll() {
+	for i := 0; i < len(n.network); i++ {
+		n.speciate(&n.network[i])
+	}
 }
 
 func (n *Neat) speciate(network *Network) {
@@ -67,15 +76,40 @@ func (n *Neat) speciate(network *Network) {
 		}
 	}
 
-	networkIndex := 0
-	for i := 0; i < len(n.network); i++ {
-		if n.network[i].networkId == network.networkId {
-			networkIndex = i
+	if lValue > n.speciesThreshold { //i flipped this sign i think it works better %different > differentThreshold
+		//finds the position
+		networkIndex := 0
+		for i := 0; i < len(n.network); i++ {
+			if n.network[i].networkId == network.networkId {
+				networkIndex = i
+			}
 		}
-	}
 
-	if lValue < n.speciesThreshold {
-		n.createSpecies(n.network[networkIndex : networkIndex+1])
+		specId := network.species
+
+		newSpec := n.createSpecies(n.network[networkIndex : networkIndex+1]) //TODO: need to remove network from species?
+
+		s := n.getSpecies(specId)
+		if s != nil {
+			s.removeNetwork(network.networkId)
+			for i := 0; i < len(s.network); i++ {
+				if s.network[i].networkId != network.networkId {
+					n.speciate(s.network[i])
+				}
+			}
+
+			if len(s.network) < 2 {
+				n.removeSpecies(s.id)
+			}
+		}
+
+		if len(newSpec.network) < 2 {
+			newSpec.removeNetwork(network.networkId)
+
+			n.species[index].addNetwork(network)
+
+			n.removeSpecies(newSpec.id)
+		}
 	} else {
 		spec := n.getSpecies(network.species)
 		if spec != nil {
@@ -127,7 +161,6 @@ func (n *Neat) findInnovationNum(search []int) int {
 	return -1
 }
 
-//TODO: test
 func (n *Neat) checkSpecies() {
 	for i := 0; i < len(n.species); i++ {
 		values := make([]float64, len(n.species))
@@ -141,21 +174,20 @@ func (n *Neat) checkSpecies() {
 		}
 
 		lValue := 1000.0
-		for i := 0; i < len(values); i++ {
-			if values[i] < lValue {
-				lValue = values[i]
+		for a := 0; a < len(values); a++ {
+			if values[a] < lValue {
+				lValue = values[a]
 			}
 		}
-		if lValue > n.speciesThreshold {
-			currentSpecies := n.species[i].network
+		if lValue < n.speciesThreshold || n.species[i].numNetwork < 2 { //switched direction if sign because %dif < difthreshold for it to be the same
+			n.removeSpecies(n.species[i].id)
+			/*currentSpecies := n.species[i].network
 			n.species = append(n.species[:i], n.species[(i+1):]...)
 			for a := 0; a < len(currentSpecies); a++ {
 				n.speciate(currentSpecies[a])
 			}
-		}
 
-		if n.species[i].numNetwork == 0 {
-			n.removeSpecies(n.species[i].id)
+			continue*/
 		}
 	}
 }
@@ -246,6 +278,7 @@ func (n *Neat) mutatePopulation() {
 	}
 }
 
+//TODO: need to have looped until completion
 func (n *Neat) start(input [][][]float64) {
 	for i := 0; i < len(n.species); i++ {
 		if isRealSpecies(&n.species[i]) {
@@ -315,7 +348,11 @@ func (n *Neat) getInnovation(num int) []int {
 	return n.connectionInnovation[num]
 }
 
-func (n *Neat) createSpecies(possible []Network) {
+func (n *Neat) createSpecies(possible []Network) *Species {
+	for i := 0; i < len(possible); i++ {
+		possible[i].species = n.speciesId
+	}
+
 	s := GetSpeciesInstance(n.speciesId, possible, &n.connectionInnovation)
 	if cap(n.species) <= len(n.species) {
 		n.species = append(n.species, s)
@@ -326,6 +363,8 @@ func (n *Neat) createSpecies(possible []Network) {
 
 	n.numSpecies++
 	n.speciesId++
+
+	return &n.species[len(n.species)-1]
 }
 
 func (n *Neat) removeSpecies(id int) {
