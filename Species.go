@@ -89,11 +89,10 @@ func (s *Species) mateSpecies() []Network {
 		}
 
 		//TODO: finish so that all the kids are made
-		/*for numMade > 0 {
-			newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
-		}*/
+		if numMade > 0 {
+			newNets[len(newNets)-1] = *sortedNetwork[0] //adds best network back in where the last child for that network
+		}
 	}
-	newNets[int(sortedNetwork[0].adjustedFitness/sumFitness*float64(len(newNets))-float64(1))] = *sortedNetwork[0] //adds best network back in where the last child for that network
 
 	for i := 0; i < len(newNets); i++ {
 		newNets[i].networkId = s.network[i].networkId
