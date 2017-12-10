@@ -2,6 +2,7 @@ package main
 
 import (
 	"sort"
+	"fmt"
 )
 
 //TODO: might want to consider starting the innovation master list at one so that all of the arrays have a default value (or prevents default value)
@@ -54,7 +55,7 @@ func (s *Species) mateSpecies() []Network {
 	//TODO: not the most effiecent and do not need net adjusted fitness
 	//sorts by adjusted fitness
 	sortedNetwork := make([]*Network, s.numNetwork*85/100)
-	lastValue := 0.0
+	lastValue := 1000.0
 	sumFitness := 0.0
 	for i := 0; i < len(sortedNetwork); i++ { //TODO: why
 		if s.getNetworkAt(i) == nil {
@@ -111,7 +112,7 @@ func isRealSpecies(s *Species) bool {
 }
 
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
-	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species, .1)
+	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species, nB.learningRate)
 
 	var numNode int
 	if nA.id > nB.id {
@@ -125,23 +126,18 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 	}
 
 	for i := 0; i < len(nA.innovation); i++ {
-		ans.mutateConnection(n.getInnovationRef(nA.getInovation(i))[0], n.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
+		if !ans.containsInnovation(nA.innovation[i]) {
+			ans.mutateConnection(n.getInnovationRef(nA.getInovation(i))[0], n.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
+		}
 	}
 
 	for i := 0; i < len(nB.innovation); i++ {
-		exist := false
-		for a := 0; a < len(nA.innovation); a++ {
-			if nB.getInovation(i) == nA.getInovation(a) {
-				exist = true
-				break
-			}
-		}
-
-		if !exist {
+		if !ans.containsInnovation(nB.innovation[i]) {
 			ans.mutateConnection(n.getInnovationRef(nB.getInovation(i))[0], n.getInnovationRef(nB.getInovation(i))[1], nB.getInovation(i))
 		}
 	}
 
+	fmt.Println(nB.innovation, " ", nA.innovation, " ", ans.innovation)
 	return ans
 }
 
