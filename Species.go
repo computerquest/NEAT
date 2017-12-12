@@ -1,8 +1,8 @@
 package main
 
 import (
-	"sort"
 	"fmt"
+	"sort"
 )
 
 //TODO: might want to consider starting the innovation master list at one so that all of the arrays have a default value (or prevents default value)
@@ -81,7 +81,7 @@ func (s *Species) mateSpecies() []Network {
 	for i := 0; i < len(sortedNetwork); i++ {
 		numKids := int(sortedNetwork[i].adjustedFitness / sumFitness * float64(len(newNets)))
 		numMade := numKids
-		for a := 1; a <= numKids && a+i < len(sortedNetwork); a++ {
+		for a := 1; count < len(newNets) && a+i < len(sortedNetwork); a++ {
 			if sortedNetwork[i+a] != nil {
 				newNets[count] = s.mateNetwork(*sortedNetwork[i], *sortedNetwork[i+a])
 				count++
@@ -242,15 +242,23 @@ func (s *Species) reduceInov(i int) *int {
 }
 
 func (s *Species) removeNetwork(id int) {
-	index := 0
+	index := -1
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i].networkId == id {
 			index = i
+			s.network[i].species = -1
 		}
 	}
 
-	s.numNetwork--
-	s.network = append(s.network[:index], s.network[index+1:]...)
+	if len(s.network) == 1 && index != -1 {
+		fmt.Print("stupid flanders")
+	}
+	if index != -1 { //this is a temp band aid for bad removals
+		//TODO: error here every once in a while when the network size is 0
+		s.numNetwork--
+		s.network = append(s.network[:index], s.network[index+1:]...)
+	}
+
 }
 
 func (s *Species) getNetworkAt(a int) *Network {

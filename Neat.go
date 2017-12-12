@@ -50,6 +50,8 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n.speciateAll()
 	n.checkSpecies()
 
+	n.printNeat()
+
 	return n
 }
 
@@ -59,6 +61,21 @@ func (n *Neat) speciateAll() {
 	}
 }
 
+/*ALGORITHM
+check to find lowest lvalue
+
+if the index creates new species
+	create new species
+	check members of old species (current network already removed) to see if fit new species
+	if the old species is not big enough then remove
+	if the new specie is not big enough remove
+		set founding network to best fitting specie
+		remove species
+else
+	remove from old specie
+	check old specie size
+	add to new specie
+*/
 func (n *Neat) speciate(network *Network) {
 	values := make([]float64, len(n.species))
 
@@ -87,10 +104,12 @@ func (n *Neat) speciate(network *Network) {
 
 		specId := network.species
 
-		newSpec := n.createSpecies(n.network[networkIndex : networkIndex+1]) //TODO: need to remove network from species?
+		newSpec := n.createSpecies(n.network[networkIndex : networkIndex+1])
 
+		//remove from the old species
 		s := n.getSpecies(specId)
 		if s != nil {
+			//removes current and checks to see if the rest need to be speciated
 			s.removeNetwork(network.networkId)
 			for i := 0; i < len(s.network); i++ {
 				if s.network[i].networkId != network.networkId {
@@ -98,24 +117,32 @@ func (n *Neat) speciate(network *Network) {
 				}
 			}
 
+			//get rid if to small
 			if len(s.network) < 2 {
 				n.removeSpecies(s.id)
 			}
 		}
 
+		//checks to see if new species meets size requirement
 		if len(newSpec.network) < 2 {
+			//reassign creator to next best in order to prevent a loop
 			newSpec.removeNetwork(network.networkId)
-
-			n.species[index].addNetwork(network)
+			n.species[index].addNetwork(network) //could be problem because index changes when make new species (maybe because should be added to the end)
 
 			n.removeSpecies(newSpec.id)
 		}
 	} else {
 		spec := n.getSpecies(network.species)
+
+		n.species[index].addNetwork(network)
+
 		if spec != nil {
 			spec.removeNetwork(network.networkId)
+
+			if len(spec.network) < 2 {
+				n.removeSpecies(spec.id)
+			}
 		}
-		n.species[index].addNetwork(network)
 	}
 }
 
@@ -179,6 +206,7 @@ func (n *Neat) checkSpecies() {
 				lValue = values[a]
 			}
 		}
+
 		if lValue < n.speciesThreshold || n.species[i].numNetwork < 2 { //switched direction if sign because %dif < difthreshold for it to be the same
 			n.removeSpecies(n.species[i].id)
 			/*currentSpecies := n.species[i].network
@@ -305,7 +333,7 @@ func (n *Neat) printNeat() {
 	fmt.Println()
 	fmt.Println()
 	for i := 0; i < len(n.species); i++ {
-		fmt.Println("species id: ", n.species[i].id)
+		fmt.Println("species id: ", n.species[i].id, " innovations: ", n.species[i].connectionInnovaton, " nodeCount: ", n.species[i].nodeCount)
 		for a := 0; a < len(n.species[i].network); a++ {
 			fmt.Println("network id: ", n.species[i].network[a].networkId, " species id: ", n.species[i].network[a].species)
 
@@ -371,8 +399,10 @@ func (n *Neat) removeSpecies(id int) {
 	for i := 0; i < len(n.species); i++ {
 		if n.species[i].id == id {
 			currentSpecies := n.species[i].network
+			fmt.Println(currentSpecies)
 			n.species = append(n.species[:i], n.species[i+1:]...)
 			for a := 0; a < len(currentSpecies); a++ {
+				currentSpecies[a].species = -1 //might consider removing from specie
 				n.speciate(currentSpecies[a])
 			}
 		}
