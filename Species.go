@@ -246,18 +246,17 @@ func (s *Species) removeNetwork(id int) {
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i].networkId == id {
 			index = i
-			s.network[i].species = -1
 		}
 	}
 
 	if len(s.network) == 1 && index != -1 {
 		fmt.Print("stupid flanders")
 	}
-	if index != -1 { //this is a temp band aid for bad removals
+	//if index != -1 { //this is a temp band aid for bad removals
 		//TODO: error here every once in a while when the network size is 0
 		s.numNetwork--
 		s.network = append(s.network[:index], s.network[index+1:]...)
-	}
+	//}
 
 }
 

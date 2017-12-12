@@ -84,11 +84,11 @@ func (n *Neat) speciate(network *Network) {
 	}
 
 	//this should be faster than sorting the whole thing (it also retains position information)
-	index := 0
+	bestSpec := -1
 	lValue := 1000.0
 	for i := 0; i < len(values); i++ {
 		if values[i] < lValue {
-			index = i
+			bestSpec = n.species[i].id
 			lValue = values[i]
 		}
 	}
@@ -113,7 +113,7 @@ func (n *Neat) speciate(network *Network) {
 			s.removeNetwork(network.networkId)
 			for i := 0; i < len(s.network); i++ {
 				if s.network[i].networkId != network.networkId {
-					n.speciate(s.network[i])
+					n.speciate(s.network[i]) //what if already under threshold and speciates rest of species
 				}
 			}
 
@@ -127,14 +127,14 @@ func (n *Neat) speciate(network *Network) {
 		if len(newSpec.network) < 2 {
 			//reassign creator to next best in order to prevent a loop
 			newSpec.removeNetwork(network.networkId)
-			n.species[index].addNetwork(network) //could be problem because index changes when make new species (maybe because should be added to the end)
+			n.getSpecies(bestSpec).addNetwork(network) //could be problem because index changes when make new species (maybe because should be added to the end)
 
 			n.removeSpecies(newSpec.id)
 		}
 	} else {
 		spec := n.getSpecies(network.species)
 
-		n.species[index].addNetwork(network)
+		n.getSpecies(bestSpec).addNetwork(network)
 
 		if spec != nil {
 			spec.removeNetwork(network.networkId)
@@ -402,7 +402,6 @@ func (n *Neat) removeSpecies(id int) {
 			fmt.Println(currentSpecies)
 			n.species = append(n.species[:i], n.species[i+1:]...)
 			for a := 0; a < len(currentSpecies); a++ {
-				currentSpecies[a].species = -1 //might consider removing from specie
 				n.speciate(currentSpecies[a])
 			}
 		}
