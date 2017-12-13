@@ -27,7 +27,7 @@ type Neat struct {
 }
 
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
-	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .01,
+	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .001,
 		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
 
 	//TODO: make sure correct
@@ -47,6 +47,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	}
 
 	n.mutatePopulation()
+	n.mutatePopulation()
 	n.speciateAll()
 	n.checkSpecies()
 
@@ -57,6 +58,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 
 func (n *Neat) speciateAll() {
 	for i := 0; i < len(n.network); i++ {
+		fmt.Println("next ", n.network[i].networkId)
 		n.speciate(&n.network[i])
 	}
 }
@@ -77,6 +79,7 @@ else
 	add to new specie
 */
 func (n *Neat) speciate(network *Network) {
+	fmt.Println("call ", network.networkId, " species: ", network.species)
 	values := make([]float64, len(n.species))
 
 	for i := 0; i < len(n.species); i++ {
@@ -106,21 +109,25 @@ func (n *Neat) speciate(network *Network) {
 
 		newSpec := n.createSpecies(n.network[networkIndex : networkIndex+1])
 
+		fmt.Println(1, " the new is a ", newSpec.id)
+
 		//remove from the old species
 		s := n.getSpecies(specId)
 		if s != nil {
+			fmt.Println(2)
 			//removes current and checks to see if the rest need to be speciated
 			s.removeNetwork(network.networkId)
 			for i := 0; i < len(s.network); i++ {
-				if s.network[i].networkId != network.networkId {
+				if s.network[i].networkId != network.networkId && s.network[i].species == specId {
+					fmt.Println("checking network ", s.network[i].networkId, " from ", network.networkId)
 					n.speciate(s.network[i]) //what if already under threshold and speciates rest of species
 				}
 			}
 
 			//get rid if to small
-			if len(s.network) < 2 {
+			/*if len(s.network) < 2 {
 				n.removeSpecies(s.id)
-			}
+			}*/
 		}
 
 		//checks to see if new species meets size requirement
@@ -129,21 +136,27 @@ func (n *Neat) speciate(network *Network) {
 			newSpec.removeNetwork(network.networkId)
 			n.getSpecies(bestSpec).addNetwork(network) //could be problem because index changes when make new species (maybe because should be added to the end)
 
+			fmt.Println(3, " now is a ", network.species)
+
 			n.removeSpecies(newSpec.id)
 		}
 	} else {
 		spec := n.getSpecies(network.species)
 
 		n.getSpecies(bestSpec).addNetwork(network)
+		fmt.Println(4, " new spec ", network.species)
 
 		if spec != nil {
+			fmt.Println(6, " was", spec.id)
 			spec.removeNetwork(network.networkId)
 
-			if len(spec.network) < 2 {
+			/*if len(spec.network) < 2 {
+				fmt.Println(7, " getting rid of ", spec.id)
 				n.removeSpecies(spec.id)
-			}
+			}*/
 		}
 	}
+	fmt.Println("end ", network.networkId, " species ", network.species)
 }
 
 func (n *Neat) getSpecies(id int) *Species {
@@ -207,8 +220,9 @@ func (n *Neat) checkSpecies() {
 			}
 		}
 
-		if lValue < n.speciesThreshold || n.species[i].numNetwork < 2 { //switched direction if sign because %dif < difthreshold for it to be the same
+		if lValue < n.speciesThreshold || len(n.species[i].network) < 2 { //switched direction if sign because %dif < difthreshold for it to be the same
 			n.removeSpecies(n.species[i].id)
+			i--
 			/*currentSpecies := n.species[i].network
 			n.species = append(n.species[:i], n.species[(i+1):]...)
 			for a := 0; a < len(currentSpecies); a++ {
@@ -399,10 +413,19 @@ func (n *Neat) removeSpecies(id int) {
 	for i := 0; i < len(n.species); i++ {
 		if n.species[i].id == id {
 			currentSpecies := n.species[i].network
-			fmt.Println(currentSpecies)
+
+			//should not need
+			/*for a := 0; a < len(currentSpecies); a++ {
+				n.species[i].removeNetwork(currentSpecies[a].networkId)
+			}*/
+
 			n.species = append(n.species[:i], n.species[i+1:]...)
 			for a := 0; a < len(currentSpecies); a++ {
-				n.speciate(currentSpecies[a])
+				//fmt.Println("remove: ", currentSpecies[a].networkId, " from spec ", id)
+				if currentSpecies[a].species == id {
+					fmt.Println("remove: ", currentSpecies[a].networkId, " from spec ", id)
+					n.speciate(currentSpecies[a])
+				}
 			}
 		}
 	}

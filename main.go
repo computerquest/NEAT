@@ -76,16 +76,19 @@ func main() {
 		},
 	}
 
-	neat := GetNeatInstance(15, 2, 2)
+	//for i := 0; i < 15; i++ {
+		neat := GetNeatInstance(15, 2, 2)
 
-	for i := 1000; i >= 0; i-- {
-		neat.start(dataA)
+		for i := 1000; i >= 0; i-- {
+			neat.start(dataA)
 
-		if i%5 == 0 {
-			neat.speciateAll()
+			if i%5 == 0 {
+				neat.speciateAll()
+				neat.checkSpecies()
+			}
 		}
-	}
 
-	neat.printNeat()
+		neat.printNeat()
+	//}
 	fmt.Println("finsihed")
 }

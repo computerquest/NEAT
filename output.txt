@@ -1,23 +1,4 @@
-species id:  0
 network id:  0  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  1  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  2  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  3  species id:  0
 expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
 node: 0 sending: receive: 2 3 
 node: 1 sending: receive: 2 3 
@@ -29,67 +10,103 @@ node: 0 sending: receive: 2 3
 node: 1 sending: receive: 2 3 
 node: 2 sending: 0 1 receive: 
 node: 3 sending: 0 1 receive: 
-network id:  7  species id:  0
+network id:  12  species id:  0
 expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
 node: 0 sending: receive: 2 3 
 node: 1 sending: receive: 2 3 
 node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  8  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
+node: 3 sending: 0 1 receive:
+ 
+species id:  5  innovations:  [5 8 8 7 4 5 5 5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]  nodeCount:  48
+network id:  1  species id:  5
+expected connection: [1 2 3 6 7][2 1][3 0][3 1][2 4][4 0]
+node: 0 sending: receive: 4 3 
 node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
+node: 2 sending: 4 1 receive: 
 node: 3 sending: 0 1 receive: 
-network id:  9  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  10  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  11  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  13  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-network id:  14  species id:  0
-expected connection: [0 1 2 3][2 0][2 1][3 0][3 1]
-node: 0 sending: receive: 2 3 
-node: 1 sending: receive: 2 3 
-node: 2 sending: 0 1 receive: 
-node: 3 sending: 0 1 receive: 
-species id:  10
-network id:  5  species id:  10
+node: 4 sending: 0 receive: 2 
+network id:  2  species id:  5
 expected connection: [0 1 2 4 5][2 0][2 1][3 0][3 4][4 1]
 node: 0 sending: receive: 2 3 
 node: 1 sending: receive: 2 4 
 node: 2 sending: 0 1 receive: 
 node: 3 sending: 0 4 receive: 
 node: 4 sending: 1 receive: 3 
-network id:  6  species id:  10
-expected connection: [1 2 3 6 7 4][2 1][3 0][3 1][2 4][4 0][3 4]
+network id:  5  species id:  5
+expected connection: [1 2 3 6 7 0 5][2 1][3 0][3 1][2 4][4 0][2 0][4 1]
+node: 0 sending: receive: 4 3 2 
+node: 1 sending: receive: 2 3 4 
+node: 2 sending: 4 1 0 receive: 
+node: 3 sending: 0 1 receive: 
+node: 4 sending: 0 1 receive: 2
+network id:  9  species id:  5
+expected connection: [0 1 2 4 5 3][2 0][2 1][3 0][3 4][4 1][3 1]
+node: 0 sending: receive: 2 3 
+node: 1 sending: receive: 2 4 3 
+node: 2 sending: 0 1 receive: 
+node: 3 sending: 0 4 1 receive: 
+node: 4 sending: 1 receive: 3 
+network id:  10  species id:  5
+expected connection: [0 1 2 4 5 3][2 0][2 1][3 0][3 4][4 1][3 1]
+node: 0 sending: receive: 2 3 
+node: 1 sending: receive: 2 4 3 
+node: 2 sending: 0 1 receive: 
+node: 3 sending: 0 4 1 receive: 
+node: 4 sending: 1 receive: 3 
+network id:  11  species id:  5
+expected connection: [1 2 3 6 7][2 1][3 0][3 1][2 4][4 0]
 node: 0 sending: receive: 4 3 
 node: 1 sending: receive: 2 3 
 node: 2 sending: 4 1 receive: 
+node: 3 sending: 0 1 receive: 
+node: 4 sending: 0 receive: 2 
+network id:  13  species id:  5
+expected connection: [0 2 3 6 5 4 7 1][2 0][3 0][3 1][2 4][4 1][3 4][4 0][2 1]
+node: 0 sending: receive: 2 3 4 
+node: 1 sending: receive: 4 3 2 
+node: 2 sending: 0 4 1 receive: 
 node: 3 sending: 0 1 4 receive: 
-node: 4 sending: 0 receive: 2 3 
-network id:  12  species id:  10
-expected connection: [0 2 3 6 5][2 0][3 0][3 1][2 4][4 1]
+node: 4 sending: 1 0 receive: 2 3 
+network id:  14  species id:  5
+expected connection: [1 2 3 6 7][2 1][3 0][3 1][2 4][4 0]
+node: 0 sending: receive: 4 3 
+node: 1 sending: receive: 2 3 
+node: 2 sending: 4 1 receive: 
+node: 3 sending: 0 1 receive: 
+node: 4 sending: 0 receive: 2 
+species id:  7  innovations:  [1 2 1 2 0 0 2 1 0 0 1 2 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]  nodeCount:  14
+network id:  6  species id:  7
+expected connection: [1 3 6 7 10 11][2 1][3 1][2 4][4 0][3 5][5 0]
+node: 0 sending: receive: 4 5 
+node: 1 sending: receive: 2 3 
+node: 2 sending: 4 1 receive: 
+node: 3 sending: 5 1 receive: 
+node: 4 sending: 0 receive: 2 
+node: 5 sending: 0 receive: 3 
+network id:  8  species id:  7
+expected connection: [1 2 3 6 14 11 0][2 1][3 0][3 1][2 4][4 5][5 0][2 0]
+node: 0 sending: receive: 5 3 2 
+node: 1 sending: receive: 2 3 
+node: 2 sending: 4 1 0 receive: 
+node: 3 sending: 0 1 receive: 
+node: 4 sending: 5 receive: 2 
+node: 5 sending: 0 receive: 4 
+species id:  11  innovations:  [2 1 2 1 0 2 1 1 1 1 0 0 1 1 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]  nodeCount:  16
+network id:  7  species id:  11
+expected connection: [0 2 3 5 8 12 13][2 0][3 0][3 1][4 1][2 5][5 6][6 4]
 node: 0 sending: receive: 2 3 
 node: 1 sending: receive: 4 3 
-node: 2 sending: 0 4 receive: 
+node: 2 sending: 0 5 receive: 
 node: 3 sending: 0 1 receive: 
-node: 4 sending: 1 receive: 2 
+node: 4 sending: 1 receive: 6 
+node: 5 sending: 6 receive: 2 
+node: 6 sending: 4 receive: 5 
+network id:  3  species id:  11
+expected connection: [0 1 2 5 7 9 6 15 16][2 0][2 1][3 0][4 1][4 0][5 4][2 4][3 6][6 5]
+node: 0 sending: receive: 2 3 4 
+node: 1 sending: receive: 2 4 
+node: 2 sending: 0 1 4 receive: 
+node: 3 sending: 0 6 receive: 
+node: 4 sending: 1 0 receive: 5 2 
+node: 5 sending: 4 receive: 6 
+node: 6 sending: 5 receive: 3

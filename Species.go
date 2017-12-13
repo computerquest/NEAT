@@ -250,7 +250,7 @@ func (s *Species) removeNetwork(id int) {
 	}
 
 	if len(s.network) == 1 && index != -1 {
-		fmt.Print("stupid flanders")
+		//fmt.Print("stupid flanders")
 	}
 	//if index != -1 { //this is a temp band aid for bad removals
 		//TODO: error here every once in a while when the network size is 0
