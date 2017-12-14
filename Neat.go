@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//TODO: need to have start looped until completion
 //MAX 1000 innovation
 /*
 not going to speciate until after a couple of rounds
@@ -22,8 +23,7 @@ type Neat struct {
 	speciesThreshold     float64   //could adjust based upon average difference between networks
 	networkId            int
 	species              []Species
-	numSpecies           int
-	speciesId            int
+	speciesId            int //TODO: could id system be length of network or position
 }
 
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
@@ -55,35 +55,187 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 
 	return n
 }
+func (n *Neat) start(input [][][]float64) {
+	for i := 0; i < len(n.species); i++ {
+		if isRealSpecies(&n.species[i]) {
+			n.species[i].trainNetworks(input)
+		}
+	}
 
+	n.checkSpecies()
+
+	newOveral := make([]Network, len(n.network))
+	count := 0
+	for i := 0; i < len(n.species); i++ {
+		if isRealSpecies(&n.species[i]) {
+			newNets := n.species[i].mateSpecies()
+			for a := 0; a < len(newNets); a++ {
+				newOveral[count] = newNets[a]
+				count++
+			}
+		}
+	}
+}
+func (n *Neat) printNeat() {
+	fmt.Println()
+	fmt.Println()
+	for i := 0; i < len(n.species); i++ {
+		fmt.Println("species id: ", n.species[i].id, " innovations: ", n.species[i].commonInnovation, " nodeCount: ", n.species[i].avgNode())
+		for a := 0; a < len(n.species[i].network); a++ {
+			fmt.Println("network id: ", n.species[i].network[a].networkId, " species id: ", n.species[i].network[a].species)
+
+			fmt.Print("expected connection: ", n.species[i].network[a].innovation)
+			for b := 0; b < len(n.species[i].network[a].innovation); b++ {
+				fmt.Print(n.getInnovation(n.species[i].network[a].innovation[b]))
+			}
+			fmt.Println()
+
+			for b := 0; b < len(n.species[i].network[a].nodeList); b++ {
+				fmt.Print("node: ", n.species[i].network[a].nodeList[b].id, " sending: ")
+				for c := 0; c < len(n.species[i].network[a].nodeList[b].send); c++ {
+					fmt.Print(n.species[i].network[a].nodeList[b].send[c].nodeTo.id, " ")
+				}
+
+				fmt.Print("receive: ")
+				for c := 0; c < len(n.species[i].network[a].nodeList[b].receive); c++ {
+					fmt.Print(n.species[i].network[a].nodeList[b].receive[c].nodeFrom.id, " ")
+				}
+
+				fmt.Println()
+			}
+		}
+	}
+}
+func (n *Neat) mutatePopulation() {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	numNet := int(r.Int63n(int64(len(n.network)))-3/5) + 3
+	for i := 0; i < numNet; i++ {
+		species := int(r.Int63n(int64(len(n.species))))
+		network := n.species[species].getNetworkAt(int(r.Int63n(int64(len(n.species[species].network)))))
+
+		nodeRange := network.id
+
+		addConnectionInnovation := func(numFrom int, numTo int) int {
+			//checks to see if preexisting innovation
+			for i := 0; i < len(n.connectionInnovation); i++ {
+				if n.connectionInnovation[i][1] == numTo && n.connectionInnovation[i][0] == numFrom {
+					//network.addInnovation(i)
+					n.species[species].mutateNetwork(i)
+
+					return i
+				}
+			}
+
+			//checks to see if needs to grow
+			num := n.createNewInnovation([]int{numFrom, numTo})
+
+			//network.addInnovation(num)
+			n.species[species].mutateNetwork(num)
+
+			return num
+		}
+
+		nodeMutate := func() {
+			var firstNode int
+			var secondNode int
+			ans := false
+
+			for !ans {
+				firstNode = int(rand.Float64() * float64(nodeRange))
+
+				if !isOutput(network.getNode(firstNode)) {
+					ans = true
+				}
+			}
+
+			secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
+
+			a := addConnectionInnovation(firstNode, network.getNextNodeId())
+			b := addConnectionInnovation(network.getNextNodeId(), secondNode)
+			network.mutateNode(firstNode, secondNode, a, b)
+		}
+
+		if r.Float64() <= n.nodeMutate {
+			nodeMutate()
+		} else {
+			var firstNode int
+			var secondNode int
+			ans := true
+			attempts := 0
+			for ans && attempts <= 10 {
+				firstNode = int(r.Int63n(int64(nodeRange)))
+				secondNode = int(r.Int63n(int64(nodeRange)))
+
+				if firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode)) {
+					continue
+				}
+
+				ans = true
+				for i := 0; i < len(n.connectionInnovation); i++ {
+					if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode || n.connectionInnovation[i][1] == firstNode && n.connectionInnovation[i][0] == secondNode {
+
+						ans = network.containsInnovation(i)
+					}
+				}
+
+				attempts++
+			}
+
+			if attempts > 10 {
+				nodeMutate()
+				continue
+			}
+
+			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////SPECIATION
 func (n *Neat) speciateAll() {
 	for i := 0; i < len(n.network); i++ {
 		fmt.Println("next ", n.network[i].networkId)
 		n.speciate(&n.network[i])
 	}
 }
+func (n *Neat) checkSpecies() {
+	for i := 0; i < len(n.species); i++ {
+		values := make([]float64, len(n.species))
+		for a := 0; a < len(n.species); a++ {
+			if a == i {
+				values[a] = 100.0
+				continue
+			}
 
-/*ALGORITHM
-check to find lowest lvalue
+			values[a] = compareGenome(n.species[i].avgNode(), n.species[i].commonInnovation, n.species[a].avgNode(), n.species[a].commonInnovation)
+		}
 
-if the index creates new species
-	create new species
-	check members of old species (current network already removed) to see if fit new species
-	if the old species is not big enough then remove
-	if the new specie is not big enough remove
-		set founding network to best fitting specie
-		remove species
-else
-	remove from old specie
-	check old specie size
-	add to new specie
-*/
+		lValue := 1000.0
+		for a := 0; a < len(values); a++ {
+			if values[a] < lValue {
+				lValue = values[a]
+			}
+		}
+
+		if lValue < n.speciesThreshold || len(n.species[i].network) < 2 { //switched direction if sign because %dif < difthreshold for it to be the same
+			n.removeSpecies(n.species[i].id)
+			i--
+			/*currentSpecies := n.species[i].network
+			n.species = append(n.species[:i], n.species[(i+1):]...)
+			for a := 0; a < len(currentSpecies); a++ {
+				n.speciate(currentSpecies[a])
+			}
+
+			continue*/
+		}
+	}
+}
 func (n *Neat) speciate(network *Network) {
 	fmt.Println("call ", network.networkId, " species: ", network.species)
 	values := make([]float64, len(n.species))
 
 	for i := 0; i < len(n.species); i++ {
-		values[i] = compareGenome(network.id+1, network.innovation, n.species[i].commonNodes, n.species[i].commonConnection)
+		values[i] = compareGenome(len(network.nodeList), network.innovation, n.species[i].avgNode(), n.species[i].commonInnovation)
 	}
 
 	//this should be faster than sorting the whole thing (it also retains position information)
@@ -158,17 +310,6 @@ func (n *Neat) speciate(network *Network) {
 	}
 	fmt.Println("end ", network.networkId, " species ", network.species)
 }
-
-func (n *Neat) getSpecies(id int) *Species {
-	for i := 0; i < len(n.species); i++ {
-		if isRealSpecies(&n.species[i]) && n.species[i].id == id {
-			return &n.species[i]
-		}
-	}
-
-	return nil
-}
-
 func compareGenome(node int, innovation []int, nodeA int, innovationA []int) float64 {
 	var larger []int
 	var smaller []int
@@ -191,189 +332,7 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 	return float64(missing+int(math.Abs(float64(node-nodeA)))) / (float64(len(smaller)) + float64((node+nodeA)/2))
 }
 
-func (n *Neat) findInnovationNum(search []int) int {
-	for i := 0; i < len(n.connectionInnovation); i++ {
-		if n.connectionInnovation[i][0] == search[0] && n.connectionInnovation[i][1] == search[1] {
-			return i
-		}
-	}
-
-	return -1
-}
-
-func (n *Neat) checkSpecies() {
-	for i := 0; i < len(n.species); i++ {
-		values := make([]float64, len(n.species))
-		for a := 0; a < len(n.species); a++ {
-			if a == i {
-				values[a] = 100.0
-				continue
-			}
-
-			values[a] = compareGenome(n.species[i].commonNodes, n.species[i].commonConnection, n.species[a].commonNodes, n.species[a].commonConnection)
-		}
-
-		lValue := 1000.0
-		for a := 0; a < len(values); a++ {
-			if values[a] < lValue {
-				lValue = values[a]
-			}
-		}
-
-		if lValue < n.speciesThreshold || len(n.species[i].network) < 2 { //switched direction if sign because %dif < difthreshold for it to be the same
-			n.removeSpecies(n.species[i].id)
-			i--
-			/*currentSpecies := n.species[i].network
-			n.species = append(n.species[:i], n.species[(i+1):]...)
-			for a := 0; a < len(currentSpecies); a++ {
-				n.speciate(currentSpecies[a])
-			}
-
-			continue*/
-		}
-	}
-}
-
-func (n *Neat) mutatePopulation() {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	numNet := int(r.Int63n(int64(len(n.network)))-3/5) + 3
-	for i := 0; i < numNet; i++ {
-		species := int(r.Int63n(int64(len(n.species))))
-		network := n.species[species].getNetworkAt(int(r.Int63n(int64(n.species[species].numNetwork))))
-
-		nodeRange := network.id
-
-		addConnectionInnovation := func(numFrom int, numTo int) int {
-			//checks to see if preexisting innovation
-			for i := 0; i < len(n.connectionInnovation); i++ {
-				if n.connectionInnovation[i][1] == numTo && n.connectionInnovation[i][0] == numFrom {
-					//network.addInnovation(i)
-					n.species[species].mutateNetwork(i)
-
-					return i
-				}
-			}
-
-			//checks to see if needs to grow
-			num := n.createNewInnovation([]int{numFrom, numTo})
-
-			//network.addInnovation(num)
-			n.species[species].mutateNetwork(num)
-
-			return num
-		}
-
-		nodeMutate := func() {
-			var firstNode int
-			var secondNode int
-			ans := false
-
-			for !ans {
-				firstNode = int(rand.Float64() * float64(nodeRange))
-
-				if !isOutput(network.getNode(firstNode)) {
-					ans = true
-				}
-			}
-
-			secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
-
-			a := addConnectionInnovation(firstNode, network.getNextNodeId())
-			b := addConnectionInnovation(network.getNextNodeId(), secondNode)
-			network.mutateNode(firstNode, secondNode, a, b)
-			n.species[species].nodeCount++
-		}
-
-		if r.Float64() <= n.nodeMutate {
-			nodeMutate()
-		} else {
-			var firstNode int
-			var secondNode int
-			ans := true
-			attempts := 0
-			for ans && attempts <= 10 {
-				firstNode = int(r.Int63n(int64(nodeRange)))
-				secondNode = int(r.Int63n(int64(nodeRange)))
-
-				if firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode)) {
-					continue
-				}
-
-				ans = true
-				for i := 0; i < len(n.connectionInnovation); i++ {
-					if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode || n.connectionInnovation[i][1] == firstNode && n.connectionInnovation[i][0] == secondNode {
-
-						ans = network.containsInnovation(i)
-					}
-				}
-
-				attempts++
-			}
-
-			if attempts > 10 {
-				nodeMutate()
-				continue
-			}
-
-			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
-		}
-	}
-}
-
-//TODO: need to have looped until completion
-func (n *Neat) start(input [][][]float64) {
-	for i := 0; i < len(n.species); i++ {
-		if isRealSpecies(&n.species[i]) {
-			n.species[i].trainNetworks(input)
-		}
-	}
-
-	n.checkSpecies()
-
-	newOveral := make([]Network, len(n.network))
-	count := 0
-	for i := 0; i < len(n.species); i++ {
-		if isRealSpecies(&n.species[i]) {
-			newNets := n.species[i].mateSpecies()
-			for a := 0; a < len(newNets); a++ {
-				newOveral[count] = newNets[a]
-				count++
-			}
-		}
-	}
-}
-
-func (n *Neat) printNeat() {
-	fmt.Println()
-	fmt.Println()
-	for i := 0; i < len(n.species); i++ {
-		fmt.Println("species id: ", n.species[i].id, " innovations: ", n.species[i].connectionInnovaton, " nodeCount: ", n.species[i].nodeCount)
-		for a := 0; a < len(n.species[i].network); a++ {
-			fmt.Println("network id: ", n.species[i].network[a].networkId, " species id: ", n.species[i].network[a].species)
-
-			fmt.Print("expected connection: ", n.species[i].network[a].innovation)
-			for b := 0; b < len(n.species[i].network[a].innovation); b++ {
-				fmt.Print(n.getInnovation(n.species[i].network[a].innovation[b]))
-			}
-			fmt.Println()
-
-			for b := 0; b < len(n.species[i].network[a].nodeList); b++ {
-				fmt.Print("node: ", n.species[i].network[a].nodeList[b].id, " sending: ")
-				for c := 0; c < len(n.species[i].network[a].nodeList[b].send); c++ {
-					fmt.Print(n.species[i].network[a].nodeList[b].send[c].nodeTo.id, " ")
-				}
-
-				fmt.Print("receive: ")
-				for c := 0; c < len(n.species[i].network[a].nodeList[b].receive); c++ {
-					fmt.Print(n.species[i].network[a].nodeList[b].receive[c].nodeFrom.id, " ")
-				}
-
-				fmt.Println()
-			}
-		}
-	}
-}
-
+//////////////////////////////////////////////////////////INNOVATON
 func (n *Neat) createNewInnovation(values []int) int {
 	if n.innovation > cap(n.connectionInnovation)-1 {
 		n.connectionInnovation = append(n.connectionInnovation, values)
@@ -385,11 +344,29 @@ func (n *Neat) createNewInnovation(values []int) int {
 
 	return n.innovation - 1
 }
-
 func (n *Neat) getInnovation(num int) []int {
 	return n.connectionInnovation[num]
 }
+func (n *Neat) findInnovationNum(search []int) int {
+	for i := 0; i < len(n.connectionInnovation); i++ {
+		if n.connectionInnovation[i][0] == search[0] && n.connectionInnovation[i][1] == search[1] {
+			return i
+		}
+	}
 
+	return -1
+}
+
+//////////////////////////////////////////////////////SPECIES
+func (n *Neat) getSpecies(id int) *Species {
+	for i := 0; i < len(n.species); i++ {
+		if isRealSpecies(&n.species[i]) && n.species[i].id == id {
+			return &n.species[i]
+		}
+	}
+
+	return nil
+}
 func (n *Neat) createSpecies(possible []Network) *Species {
 	for i := 0; i < len(possible); i++ {
 		possible[i].species = n.speciesId
@@ -403,12 +380,10 @@ func (n *Neat) createSpecies(possible []Network) *Species {
 		n.species[len(n.species)-1] = s
 	}
 
-	n.numSpecies++
 	n.speciesId++
 
 	return &n.species[len(n.species)-1]
 }
-
 func (n *Neat) removeSpecies(id int) {
 	for i := 0; i < len(n.species); i++ {
 		if n.species[i].id == id {

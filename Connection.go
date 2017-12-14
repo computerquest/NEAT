@@ -3,13 +3,14 @@ package main
 import (
 	"math/rand"
 )
-type Connection struct{
-	weight float64
-	disable bool
+
+type Connection struct {
+	weight     float64
+	disable    bool
 	nextWeight float64
-	nodeTo *Node
-	nodeFrom *Node
-	inNumber int
+	nodeTo     *Node
+	nodeFrom   *Node
+	inNumber   int //TODO: do i ever use?
 }
 
 func isRealConnection(c *Connection) bool {
@@ -19,6 +20,7 @@ func isRealConnection(c *Connection) bool {
 
 	return true
 }
+
 //these act as the middle man between nodes
 func (c *Connection) notifyValue() {
 	if c.nodeTo != nil {
@@ -32,6 +34,6 @@ func (c *Connection) notifyInfluence() {
 	}
 }
 
-func GetConnectionInstance(from *Node, to *Node, inNumber int) Connection{
+func GetConnectionInstance(from *Node, to *Node, inNumber int) Connection {
 	return Connection{weight: rand.Float64()*.2 + .4, disable: false, nextWeight: 0, nodeTo: to, nodeFrom: from, inNumber: inNumber}
 }
