@@ -246,7 +246,8 @@ func (n *Neat) speciate(network *Network) {
 		}
 	}
 
-	if lValue > n.speciesThreshold { //i flipped this sign i think it works better %different > differentThreshold
+	//s := n.getSpecies(network.species)
+	if lValue > n.speciesThreshold { //&& s != nil && len(s.network) > 2 { //i flipped this sign i think it works better %different > differentThreshold
 		//finds the position
 		networkIndex := 0
 		for i := 0; i < len(n.network); i++ {
@@ -255,25 +256,25 @@ func (n *Neat) speciate(network *Network) {
 			}
 		}
 
-		specId := network.species
-
+		lastSpec := network.species
 		newSpec := n.createSpecies(n.network[networkIndex : networkIndex+1])
 
 		fmt.Println(1, " the new is a ", newSpec.id)
 
 		//remove from the old species
-		s := n.getSpecies(specId)
+		s := n.getSpecies(lastSpec)
 		if s != nil {
 			//removes current and checks to see if the rest need to be speciated
 			s.removeNetwork(network.networkId)
 			for i := 0; i < len(s.network); i++ {
-				if s.network[i].networkId != network.networkId && s.network[i].species == specId {
+				if s.network[i].networkId != network.networkId && s.network[i].species == s.id {
 					fmt.Println("checking network ", s.network[i].networkId, " from ", network.networkId)
 					//n.speciate(s.network[i]) //what if already under threshold and speciates rest of species
 					if compareGenome(len(s.network[i].nodeList), s.network[i].innovation, s.avgNode(), s.commonInnovation) > compareGenome(len(s.network[i].nodeList), s.network[i].innovation, newSpec.avgNode(), newSpec.commonInnovation) {
 						newSpec.addNetwork(s.network[i])
 						fmt.Println(2, "net ", s.network[i].networkId, " net was: ", s.id, " now is ", newSpec.id)
 						s.removeNetwork(s.network[i].networkId)
+						i--
 					}
 				}
 			}
@@ -295,14 +296,13 @@ func (n *Neat) speciate(network *Network) {
 			n.removeSpecies(newSpec.id)
 		}
 	} else if network.species != bestSpec {
-		spec := n.getSpecies(network.species)
-
+		lastSpec := n.getSpecies(network.species)
 		n.getSpecies(bestSpec).addNetwork(network)
 		fmt.Println(4, " new spec ", network.species)
 
-		if spec != nil {
-			fmt.Println(6, " was", spec.id)
-			spec.removeNetwork(network.networkId)
+		if lastSpec != nil {
+			fmt.Println(6, " was", lastSpec.id)
+			lastSpec.removeNetwork(network.networkId)
 
 			/*if len(spec.network) < 2 {
 				fmt.Println(7, " getting rid of ", spec.id)
@@ -400,11 +400,6 @@ func (n *Neat) removeSpecies(id int) {
 	for i := 0; i < len(n.species); i++ {
 		if n.species[i].id == id {
 			currentSpecies := n.species[i].network
-
-			//should not need
-			/*for a := 0; a < len(currentSpecies); a++ {
-				n.species[i].removeNetwork(currentSpecies[a].networkId)
-			}*/
 
 			n.species = append(n.species[:i], n.species[i+1:]...)
 			for a := 0; a < len(currentSpecies); a++ {
