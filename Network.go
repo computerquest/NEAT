@@ -20,7 +20,7 @@ type Network struct {
 }
 
 func GetNetworkInstance(input int, output int, id int, species int, learningRate float64) Network {
-	n := Network{networkId: id, id: 0, learningRate: learningRate, nodeList: make([]Node, 0, 100), output: make([]*Node, output), input: make([]*Node, input), species: species}
+	n := Network{networkId: id, id: 0, learningRate: learningRate, nodeList: make([]Node, 0, 100), output: make([]*Node, output), input: make([]*Node, input+1), species: species}
 
 	//create output nodes
 	for i := 0; i < output; i++ {
@@ -36,6 +36,7 @@ func GetNetworkInstance(input int, output int, id int, species int, learningRate
 			startInov++
 		}
 	}
+	n.input[input] = n.createNode() //starts unconnected and will form connections over time
 
 	return n
 }
@@ -50,7 +51,11 @@ func isRealNetwork(n *Network) bool {
 ////////////////////////////////////////////////////////////RUNNING
 func (n *Network) Process(input []float64) []float64 {
 	for i := 0; i < len(n.input); i++ {
-		n.input[i].setValue(input[i])
+		if i < len(input) {
+			n.input[i].setValue(input[i])
+		} else {
+			n.input[i].setValue(1)
+		}
 	}
 
 	ans := make([]float64, len(n.output))

@@ -217,7 +217,7 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 func (s *Species) trainNetworks(trainingSet [][][]float64) {
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i] != nil {
-			s.network[i].trainSet(trainingSet, 1500)
+			s.network[i].trainSet(trainingSet, 500)
 		}
 	}
 }

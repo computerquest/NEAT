@@ -150,12 +150,17 @@ func (n *Neat) mutatePopulation() {
 
 			a := addConnectionInnovation(firstNode, network.getNextNodeId())
 			b := addConnectionInnovation(network.getNextNodeId(), secondNode)
+
 			network.mutateNode(firstNode, secondNode, a, b)
 		}
 
 		if r.Float64() <= n.nodeMutate {
 			nodeMutate()
 		} else {
+			/*
+				could interate through and find a number that has not been used and then use that number so only have to rng one
+			*/
+
 			var firstNode int
 			var secondNode int
 			ans := true
@@ -168,7 +173,7 @@ func (n *Neat) mutatePopulation() {
 					continue
 				}
 
-				ans = true
+				ans = false
 				for i := 0; i < len(n.connectionInnovation); i++ {
 					if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode || n.connectionInnovation[i][1] == firstNode && n.connectionInnovation[i][0] == secondNode {
 
