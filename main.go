@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 func main() {
@@ -69,18 +70,47 @@ func main() {
 
 	fmt.Print("works")*/
 
-	dataA := [][][]float64{
+	/*dataA := [][][]float64{
 		{
 			{.05, .1},
 			{.01, .99},
 		},
+	}*/
+
+	data := [][][]float64{
+		{
+			{0, 1},
+			{1},
+		},
+		{
+			{1, 0},
+			{1},
+		},
+		{
+			{0, 0},
+			{0},
+		},
+		{
+			{1, 1},
+			{0},
+		},
 	}
 
 	//for i := 0; i < 15; i++ {
-	neat := GetNeatInstance(15, 2, 2)
+	neat := GetNeatInstance(15, 2, 1)
+	globalError := 100000.0
 
-	for i := 1000; i >= 0; i-- {
-		neat.start(dataA)
+	for i := 100; i >= 0; i-- {
+		neat.start(data)
+
+		for i := 0; i < len(neat.network); i++ {
+			temp := math.Abs(data[0][1][0]-neat.network[i].Process(data[0][0])[0]) + math.Abs(data[1][1][0]-neat.network[i].Process(data[1][0])[0]) + math.Abs(data[2][1][0]-neat.network[i].Process(data[2][0])[0]) + math.Abs(data[3][1][0]-neat.network[i].Process(data[3][0])[0])
+			if temp < globalError {
+				fmt.Println("id: ", neat.network[i].networkId, "result: ", temp, neat.network[i].Process(data[0][0]), neat.network[i].Process(data[1][0]), neat.network[i].Process(data[2][0]), neat.network[i].Process(data[3][0]))
+				neat.printNeat()
+				globalError = temp
+			}
+		}
 
 		if i%5 == 0 {
 			neat.speciateAll()
@@ -89,6 +119,7 @@ func main() {
 	}
 
 	neat.printNeat()
+
 	//}
 	fmt.Println("finsihed")
 }
