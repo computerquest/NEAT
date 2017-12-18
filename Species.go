@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
+	"time"
 )
 
 //TODO: when passing back the new species networks to Neat make sure the pointers (in species) are updated as well
@@ -178,6 +180,103 @@ func (s *Species) updateStereotype() {
 				s.incrementInov(s.network[i].innovation[a])
 			}
 		}
+	}
+}
+func (n *Species) createNewInnovation(values []int) int {
+	if len(*n.innovationDict) == cap(*n.innovationDict)-1 {
+		fmt.Println("bad stuff")
+	} else {
+		*n.innovationDict = (*n.innovationDict)[0 : len(*n.innovationDict)+1]
+		(*n.innovationDict)[len(*n.innovationDict)-1] = values
+	}
+
+	return len(*n.innovationDict) - 1
+}
+
+//TODO: change name
+//TODO: fix my lazyness
+//TODO: test/integrate
+func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
+	nodeRange := len(network.nodeList)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	addConnectionInnovation := func(numFrom int, numTo int) int {
+		//checks to see if preexisting innovation
+		for i := 0; i < len((*s.innovationDict)); i++ {
+			if (*s.innovationDict)[i][1] == numTo && (*s.innovationDict)[i][0] == numFrom {
+				//network.addInnovation(i)
+				s.mutateNetwork(i)
+
+				return i
+			}
+		}
+
+		//checks to see if needs to grow
+		num := s.createNewInnovation([]int{numFrom, numTo})
+
+		//network.addInnovation(num)
+		s.mutateNetwork(num)
+
+		return num
+	}
+
+	nodeMutate := func() {
+		var firstNode int
+		var secondNode int
+		ans := false
+
+		for !ans {
+			firstNode = int(rand.Float64() * float64(nodeRange))
+
+			if !isOutput(network.getNode(firstNode)) {
+				ans = true
+			}
+		}
+
+		secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
+
+		a := addConnectionInnovation(firstNode, network.getNextNodeId())
+		b := addConnectionInnovation(network.getNextNodeId(), secondNode)
+
+		network.mutateNode(firstNode, secondNode, a, b)
+	}
+
+	if r.Float64() <= nodeMutateA {
+		nodeMutate()
+	} else {
+		/*
+			could interate through and find a number that has not been used and then use that number so only have to rng one
+		*/
+
+		var firstNode int
+		var secondNode int
+		ans := true
+		attempts := 0
+		for ans && attempts <= 10 {
+			firstNode = int(r.Int63n(int64(nodeRange)))
+			secondNode = int(r.Int63n(int64(nodeRange)))
+
+			if firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode)) {
+				continue
+			}
+
+			ans = false
+			for i := 0; i < len((*s.innovationDict)); i++ {
+				if (*s.innovationDict)[i][0] == firstNode && (*s.innovationDict)[i][1] == secondNode || (*s.innovationDict)[i][1] == firstNode && (*s.innovationDict)[i][0] == secondNode {
+
+					ans = network.containsInnovation(i)
+				}
+			}
+
+			attempts++
+		}
+
+		if attempts > 10 {
+			nodeMutate()
+			continue
+		}
+
+		network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
 	}
 }
 

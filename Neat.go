@@ -350,7 +350,7 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 }
 
 //////////////////////////////////////////////////////////INNOVATON
-func (n *Neat) createNewInnovation(values []int) int {
+/*func (n *Neat) createNewInnovation(values []int) int {
 	if n.innovation > cap(n.connectionInnovation)-1 {
 		n.connectionInnovation = append(n.connectionInnovation, values)
 	} else {
@@ -360,7 +360,7 @@ func (n *Neat) createNewInnovation(values []int) int {
 	n.innovation++
 
 	return n.innovation - 1
-}
+}*/
 func (n *Neat) getInnovation(num int) []int {
 	return n.connectionInnovation[num]
 }
