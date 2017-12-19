@@ -98,9 +98,10 @@ func main() {
 
 	//for i := 0; i < 15; i++ {
 	neat := GetNeatInstance(15, 2, 1)
+	neat.initialize()
 	globalError := 100000.0
 
-	for i := 100; i >= 0; i-- {
+	for a := 100; a >= 0; a-- {
 		neat.start(data)
 
 		for i := 0; i < len(neat.network); i++ {
@@ -112,7 +113,7 @@ func main() {
 			}
 		}
 
-		if i%5 == 0 {
+		if a%5 == 0 {
 			neat.speciateAll()
 			neat.checkSpecies()
 		}

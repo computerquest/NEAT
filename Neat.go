@@ -27,13 +27,13 @@ type Neat struct {
 }
 
 func GetNeatInstance(numNetworks int, input int, output int) Neat {
-	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .001,
+	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .01,
 		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
 
 	//TODO: make sure correct
 	for i := output; i < input+output; i++ {
 		for a := 0; a < output; a++ {
-			n.createNewInnovation([]int{i, a})
+			n.createInnovation([]int{i, a})
 		}
 	}
 
@@ -41,9 +41,13 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 		n.network[i] = GetNetworkInstance(input, output, i, 0, .1)
 	}
 
-	n.createSpecies(n.network[0 : len(n.network)%5+(numNetworks/5)])
-	for i := len(n.network)%5 + (numNetworks / 5); i+(numNetworks/5) <= len(n.network); i += (numNetworks / 5) {
-		n.createSpecies(n.network[i : i+(numNetworks/5)])
+	return n
+}
+
+func (n *Neat) initialize() {
+	n.createSpecies(n.network[0: len(n.network)%5+(len(n.network)/5)])
+	for i := len(n.network)%5 + (len(n.network) / 5); i+(len(n.network)/5) <= len(n.network); i += (len(n.network) / 5) {
+		n.createSpecies(n.network[i: i+(len(n.network)/5)])
 	}
 
 	n.mutatePopulation()
@@ -52,8 +56,6 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	n.checkSpecies()
 
 	n.printNeat()
-
-	return n
 }
 func (n *Neat) start(input [][][]float64) {
 	for i := 0; i < len(n.species); i++ {
@@ -73,12 +75,14 @@ func (n *Neat) start(input [][][]float64) {
 			}
 		}
 	}
+
 }
 func (n *Neat) printNeat() {
 	fmt.Println()
 	fmt.Println()
 	for i := 0; i < len(n.species); i++ {
 		fmt.Println("species id: ", n.species[i].id, " innovations: ", n.species[i].commonInnovation, " net: ", len(n.species[i].network))
+		fmt.Printf("10 %p %p \n", n.species[i].innovationDict, &n.connectionInnovation)
 		for a := 0; a < len(n.species[i].network); a++ {
 			fmt.Println("network id: ", n.species[i].network[a].networkId, " species id: ", n.species[i].network[a].species)
 
@@ -109,95 +113,105 @@ func (n *Neat) mutatePopulation() {
 	numNet := int(r.Int63n(int64(len(n.network)))-3/5) + 3
 	for i := 0; i < numNet; i++ {
 		species := int(r.Int63n(int64(len(n.species))))
-		network := n.species[species].getNetworkAt(int(r.Int63n(int64(len(n.species[species].network)))))
 
-		nodeRange := network.id
+		/*	nodeRange := network.id
 
-		addConnectionInnovation := func(numFrom int, numTo int) int {
-			//checks to see if preexisting innovation
-			for i := 0; i < len(n.connectionInnovation); i++ {
-				if n.connectionInnovation[i][1] == numTo && n.connectionInnovation[i][0] == numFrom {
-					//network.addInnovation(i)
-					n.species[species].mutateNetwork(i)
-
-					return i
-				}
-			}
-
-			//checks to see if needs to grow
-			num := n.createNewInnovation([]int{numFrom, numTo})
-
-			//network.addInnovation(num)
-			n.species[species].mutateNetwork(num)
-
-			return num
-		}
-
-		nodeMutate := func() {
-			var firstNode int
-			var secondNode int
-			ans := false
-
-			for !ans {
-				firstNode = int(rand.Float64() * float64(nodeRange))
-
-				if !isOutput(network.getNode(firstNode)) {
-					ans = true
-				}
-			}
-
-			secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
-
-			a := addConnectionInnovation(firstNode, network.getNextNodeId())
-			b := addConnectionInnovation(network.getNextNodeId(), secondNode)
-
-			network.mutateNode(firstNode, secondNode, a, b)
-		}
-
-		if r.Float64() <= n.nodeMutate {
-			nodeMutate()
-		} else {
-			/*
-				could interate through and find a number that has not been used and then use that number so only have to rng one
-			*/
-
-			var firstNode int
-			var secondNode int
-			ans := true
-			attempts := 0
-			for ans && attempts <= 10 {
-				firstNode = int(r.Int63n(int64(nodeRange)))
-				secondNode = int(r.Int63n(int64(nodeRange)))
-
-				if firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode)) {
-					continue
-				}
-
-				ans = false
+			addConnectionInnovation := func(numFrom int, numTo int) int {
+				//checks to see if preexisting innovation
 				for i := 0; i < len(n.connectionInnovation); i++ {
-					if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode || n.connectionInnovation[i][1] == firstNode && n.connectionInnovation[i][0] == secondNode {
+					if n.connectionInnovation[i][1] == numTo && n.connectionInnovation[i][0] == numFrom {
+						//network.addInnovation(i)
+						n.species[species].mutateNetwork(i)
 
-						ans = network.containsInnovation(i)
+						return i
 					}
 				}
 
-				attempts++
+				//checks to see if needs to grow
+				num := n.createInnovation([]int{numFrom, numTo})
+
+				//network.addInnovation(num)
+				n.species[species].mutateNetwork(num)
+
+				return num
 			}
 
-			if attempts > 10 {
+			nodeMutate := func() {
+				var firstNode int
+				var secondNode int
+				ans := false
+
+				for !ans {
+					firstNode = int(rand.Float64() * float64(nodeRange))
+
+					if !isOutput(network.getNode(firstNode)) {
+						ans = true
+					}
+				}
+
+				secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
+
+				a := addConnectionInnovation(firstNode, network.getNextNodeId())
+				b := addConnectionInnovation(network.getNextNodeId(), secondNode)
+
+				network.mutateNode(firstNode, secondNode, a, b)
+			}
+
+			if r.Float64() <= n.nodeMutate {
 				nodeMutate()
+			} else {
+				/*
+					could interate through and find a number that has not been used and then use that number so only have to rng one
+				*/
+
+		/*var firstNode int
+		var secondNode int
+		ans := true
+		attempts := 0
+		for ans && attempts <= 10 {
+			firstNode = int(r.Int63n(int64(nodeRange)))
+			secondNode = int(r.Int63n(int64(nodeRange)))
+
+			if firstNode == secondNode || isOutput(network.getNode(firstNode)) || isInput(network.getNode(secondNode)) {
 				continue
 			}
 
-			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
+			ans = false
+			for i := 0; i < len(n.connectionInnovation); i++ {
+				if n.connectionInnovation[i][0] == firstNode && n.connectionInnovation[i][1] == secondNode || n.connectionInnovation[i][1] == firstNode && n.connectionInnovation[i][0] == secondNode {
+
+					ans = network.containsInnovation(i)
+				}
+			}
+
+			attempts++
 		}
+
+		if attempts > 10 {
+			nodeMutate()
+			continue
+		}
+
+		network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
+	}*/
+
+		n.species[species].mutateSpecific(n.species[species].getNetworkAt(int(r.Int63n(int64(len(n.species[species].network))))), n.nodeMutate)
 	}
+}
+func (n *Neat) createInnovation(values []int) int {
+	if len(n.connectionInnovation) == cap(n.connectionInnovation)-1 {
+		fmt.Println("bad stuff")
+	} else {
+		n.connectionInnovation = (n.connectionInnovation)[0: len(n.connectionInnovation)+1]
+		n.connectionInnovation[len(n.connectionInnovation)-1] = values
+	}
+
+	return len(n.connectionInnovation) - 1
 }
 
 /////////////////////////////////////////////////////////////SPECIATION
 func (n *Neat) speciateAll() {
 	for i := 0; i < len(n.network); i++ {
-		fmt.Println("next ", n.network[i].networkId)
 		n.speciate(&n.network[i])
 	}
 }

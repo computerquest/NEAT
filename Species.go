@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//TODO: can expand number of possbile innovatoins by passing pointers to the slices
 //TODO: when passing back the new species networks to Neat make sure the pointers (in species) are updated as well
 type Species struct {
 	network             []*Network //holds the pointer to all the networks
@@ -183,13 +184,14 @@ func (s *Species) updateStereotype() {
 	}
 }
 func (n *Species) createNewInnovation(values []int) int {
-	if len(*n.innovationDict) == cap(*n.innovationDict)-1 {
+	if len(*n.innovationDict) >= cap(*n.innovationDict) {
 		fmt.Println("bad stuff")
 	} else {
 		*n.innovationDict = (*n.innovationDict)[0 : len(*n.innovationDict)+1]
 		(*n.innovationDict)[len(*n.innovationDict)-1] = values
 	}
 
+	fmt.Printf("%p \n", n.innovationDict)
 	return len(*n.innovationDict) - 1
 }
 
@@ -263,7 +265,6 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 			ans = false
 			for i := 0; i < len((*s.innovationDict)); i++ {
 				if (*s.innovationDict)[i][0] == firstNode && (*s.innovationDict)[i][1] == secondNode || (*s.innovationDict)[i][1] == firstNode && (*s.innovationDict)[i][0] == secondNode {
-
 					ans = network.containsInnovation(i)
 				}
 			}
@@ -273,7 +274,6 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 
 		if attempts > 10 {
 			nodeMutate()
-			continue
 		}
 
 		network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
@@ -363,7 +363,9 @@ func (s *Species) mateSpecies() []Network {
 		}
 
 		if numMade > 0 {
-			newNets[len(newNets)-1] = *sortedNetwork[0] //adds best network back in where the last child for that network
+			//TODO: change from arbitrary value
+			s.mutateSpecific(sortedNetwork[0], .3) //adds best network back in where the last child for that network
+			newNets[len(newNets)-1] = *sortedNetwork[0]
 		}
 	}
 
