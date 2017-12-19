@@ -82,7 +82,7 @@ func (n *Neat) printNeat() {
 	fmt.Println()
 	for i := 0; i < len(n.species); i++ {
 		fmt.Println("species id: ", n.species[i].id, " innovations: ", n.species[i].commonInnovation, " net: ", len(n.species[i].network))
-		fmt.Printf("10 %p %p \n", n.species[i].innovationDict, &n.connectionInnovation)
+		n.species[i].sortInnovation()
 		for a := 0; a < len(n.species[i].network); a++ {
 			fmt.Println("network id: ", n.species[i].network[a].networkId, " species id: ", n.species[i].network[a].species)
 

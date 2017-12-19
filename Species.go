@@ -191,7 +191,6 @@ func (n *Species) createNewInnovation(values []int) int {
 		(*n.innovationDict)[len(*n.innovationDict)-1] = values
 	}
 
-	fmt.Printf("%p \n", n.innovationDict)
 	return len(*n.innovationDict) - 1
 }
 
@@ -237,10 +236,7 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 
 		secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
 
-		a := addConnectionInnovation(firstNode, network.getNextNodeId())
-		b := addConnectionInnovation(network.getNextNodeId(), secondNode)
-
-		network.mutateNode(firstNode, secondNode, a, b)
+		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode))
 	}
 
 	if r.Float64() <= nodeMutateA {
