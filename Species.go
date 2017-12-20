@@ -229,12 +229,13 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 		for !ans {
 			firstNode = int(rand.Float64() * float64(nodeRange))
 
-			if !isOutput(network.getNode(firstNode)) {
+			if !isOutput(network.getNode(firstNode)) && len(network.getNode(firstNode).send) > 0 {
 				ans = true
 			}
 		}
 
-		secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
+		test := int(rand.Float64() * float64(len(network.getNode(firstNode).send)))
+		secondNode = network.getNode(firstNode).send[test].nodeTo.id //int(r.Int63n(int64(nodeRange)))
 
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode))
 	}
@@ -287,15 +288,15 @@ func (s *Species) mutateNetwork(innovate int) {
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
 	ans := GetNetworkInstance(len(nB.output), len(nB.input)-1, 0, nB.species, nB.learningRate, false)
 
-	var numNode int
+	numNode := -1 * (len(nB.output) + len(nB.input))
 	if len(nA.nodeList) > len(nB.nodeList) {
-		numNode = len(nA.nodeList)
+		numNode += len(nA.nodeList)
 	} else {
-		numNode = len(nB.nodeList)
+		numNode += len(nB.nodeList)
 	}
 
 	for i := 0; i < numNode; i++ { //this should be ok
-		ans.createNode()
+		ans.createNode(100)
 	}
 
 	for i := 0; i < len(nA.innovation); i++ {

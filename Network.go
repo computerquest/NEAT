@@ -24,13 +24,13 @@ func GetNetworkInstance(input int, output int, id int, species int, learningRate
 
 	//create output nodes
 	for i := 0; i < output; i++ {
-		n.output[i] = n.createNode()
+		n.output[i] = n.createNode(0)
 	}
 
 	//creates the input nodes and adds them to the network
 	startInov := 0 //this should work
 	for i := 0; i < input; i++ {
-		n.input[i] = n.createNode()
+		n.input[i] = n.createNode(100)
 		if addCon {
 			for a := 0; a < output; a++ {
 				n.mutateConnection(n.input[i].id, n.output[a].id, startInov)
@@ -38,7 +38,7 @@ func GetNetworkInstance(input int, output int, id int, species int, learningRate
 			}
 		}
 	}
-	n.input[input] = n.createNode() //starts unconnected and will form connections over time
+	n.input[input] = n.createNode(100) //starts unconnected and will form connections over time
 
 	return n
 }
@@ -120,11 +120,9 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		currentError := 0.0
 		//resets all the next weights
 		for i := 0; i < len(n.nodeList); i++ {
-			if n.nodeList[i].id != 0 {
-				for a := 0; a < len(n.nodeList[i].send); a++ {
-					if isRealConnection(&n.nodeList[i].send[a]) {
-						n.nodeList[i].send[a].nextWeight = 0
-					}
+			for a := 0; a < len(n.nodeList[i].send); a++ {
+				if isRealConnection(&n.nodeList[i].send[a]) {
+					n.nodeList[i].send[a].nextWeight = 0
 				}
 			}
 		}
@@ -135,17 +133,15 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 
 		//updates all the
 		for i := 0; i < len(n.nodeList); i++ {
-			if isRealNode(&n.nodeList[i]) {
-				for a := 0; a < len(n.nodeList[i].send); a++ {
-					if isRealConnection(&n.nodeList[i].send[a]) {
-						n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight
-					}
+			for a := 0; a < len(n.nodeList[i].send); a++ {
+				if isRealConnection(&n.nodeList[i].send[a]) {
+					n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight
 				}
 			}
 		}
 
 		errorChange = (currentError - lastError) / lastError
-		fmt.Printf("Gen: %d Current Error: %e avg: %e change: %e percent change: %f", z, currentError, currentError/float64(len(input)), currentError-lastError, errorChange)
+		fmt.Printf("Gen: %d Current Error: %f avg: %e change: %e percent change: %f", z, currentError, currentError/float64(len(input)), currentError-lastError, errorChange)
 		fmt.Println()
 		lastError = currentError
 
@@ -166,7 +162,7 @@ func (n *Network) addInnovation(num int) {
 	if len(n.innovation) >= cap(n.innovation) {
 		n.innovation = append(n.innovation, num)
 	} else {
-		n.innovation = n.innovation[0 : len(n.innovation)+1]
+		n.innovation = n.innovation[0: len(n.innovation)+1]
 		n.innovation[len(n.innovation)-1] = num
 	}
 }
@@ -207,14 +203,14 @@ func (n *Network) numConnection() int {
 func (n *Network) getNode(i int) *Node {
 	return &n.nodeList[i]
 }
-func (n *Network) createNode() *Node {
-	node := Node{value: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, 0), send: make([]Connection, 0, 100)}
+func (n *Network) createNode(send int) *Node {
+	node := Node{value: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, 0, 0), send: make([]Connection, 0, send)}
 	n.id++
 
 	if len(n.nodeList) >= cap(n.nodeList) {
 		n.nodeList = append(n.nodeList, node)
 	} else {
-		n.nodeList = n.nodeList[0 : len(n.nodeList)+1]
+		n.nodeList = n.nodeList[0: len(n.nodeList)+1]
 		n.nodeList[len(n.nodeList)-1] = node
 	}
 
@@ -226,7 +222,7 @@ func (n *Network) getNextNodeId() int {
 func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int) int {
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
-	newNode := n.createNode()
+	newNode := n.createNode(100)
 
 	n.addInnovation(innovationA)
 	n.addInnovation(innovationB)

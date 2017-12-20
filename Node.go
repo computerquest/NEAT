@@ -110,21 +110,22 @@ func sigmoidDerivative(value float64) float64 {
 }
 
 //TODO: do i need any of these node type methods
-func isRealNode(n *Node) bool {
-	if cap(n.send) != 0 || cap(n.receive) != 0 {
-		return true
-	}
-
-	return false
-}
 func isInput(n *Node) bool {
-	if len(n.receive) == 0 {
+	if cap(n.receive) == 0 {
 		return true
 	}
 
 	return false
 }
 func isOutput(n *Node) bool {
+	if cap(n.send) == 0 {
+		return true
+	}
+
+	return false
+}
+
+func isBias(n *Node) bool {
 	if len(n.send) == 0 {
 		return true
 	}
