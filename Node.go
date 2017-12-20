@@ -6,6 +6,7 @@ import (
 
 //MAX 100 CONNECTIONS
 
+//TODO: can't give bias node connections because it is seen as an input and output in the classification methods
 type Node struct {
 	value             float64
 	id                int

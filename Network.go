@@ -19,7 +19,7 @@ type Network struct {
 	species         int
 }
 
-func GetNetworkInstance(input int, output int, id int, species int, learningRate float64) Network {
+func GetNetworkInstance(input int, output int, id int, species int, learningRate float64, addCon bool) Network {
 	n := Network{networkId: id, id: 0, learningRate: learningRate, nodeList: make([]Node, 0, 100), output: make([]*Node, output), input: make([]*Node, input+1), species: species}
 
 	//create output nodes
@@ -31,9 +31,11 @@ func GetNetworkInstance(input int, output int, id int, species int, learningRate
 	startInov := 0 //this should work
 	for i := 0; i < input; i++ {
 		n.input[i] = n.createNode()
-		for a := 0; a < output; a++ {
-			n.mutateConnection(n.input[i].id, n.output[a].id, startInov)
-			startInov++
+		if addCon {
+			for a := 0; a < output; a++ {
+				n.mutateConnection(n.input[i].id, n.output[a].id, startInov)
+				startInov++
+			}
 		}
 	}
 	n.input[input] = n.createNode() //starts unconnected and will form connections over time

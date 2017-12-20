@@ -245,7 +245,6 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 		/*
 			could interate through and find a number that has not been used and then use that number so only have to rng one
 		*/
-
 		var firstNode int
 		var secondNode int
 		ans := true
@@ -260,8 +259,11 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 
 			ans = false
 			for i := 0; i < len((*s.innovationDict)); i++ {
-				if (*s.innovationDict)[i][0] == firstNode && (*s.innovationDict)[i][1] == secondNode || (*s.innovationDict)[i][1] == firstNode && (*s.innovationDict)[i][0] == secondNode {
+				if ((*s.innovationDict)[i][0] == firstNode && (*s.innovationDict)[i][1] == secondNode) || ((*s.innovationDict)[i][1] == firstNode && (*s.innovationDict)[i][0] == secondNode) {
 					ans = network.containsInnovation(i)
+					if ans {
+						break
+					}
 				}
 			}
 
@@ -270,9 +272,9 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 
 		if attempts > 10 {
 			nodeMutate()
+		} else {
+			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
 		}
-
-		network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
 	}
 }
 
@@ -280,24 +282,24 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 func (s *Species) mutateNetwork(innovate int) {
 	s.incrementInov(innovate)
 }
+
+//TODO: optimize
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
-	ans := GetNetworkInstance(len(nB.output), len(nB.input), 0, nB.species, nB.learningRate)
+	ans := GetNetworkInstance(len(nB.output), len(nB.input)-1, 0, nB.species, nB.learningRate, false)
 
 	var numNode int
-	if nA.id > nB.id {
-		numNode = nA.id
+	if len(nA.nodeList) > len(nB.nodeList) {
+		numNode = len(nA.nodeList)
 	} else {
-		numNode = nB.id
+		numNode = len(nB.nodeList)
 	}
 
-	for i := ans.id; i < numNode; i++ {
+	for i := 0; i < numNode; i++ { //this should be ok
 		ans.createNode()
 	}
 
 	for i := 0; i < len(nA.innovation); i++ {
-		if !ans.containsInnovation(nA.innovation[i]) {
-			ans.mutateConnection(n.getInnovationRef(nA.getInovation(i))[0], n.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
-		}
+		ans.mutateConnection(n.getInnovationRef(nA.getInovation(i))[0], n.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
 	}
 
 	for i := 0; i < len(nB.innovation); i++ {
@@ -306,7 +308,6 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 		}
 	}
 
-	fmt.Println(nB.innovation, " ", nA.innovation, " ", ans.innovation)
 	return ans
 }
 func (s *Species) trainNetworks(trainingSet [][][]float64) {
