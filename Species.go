@@ -268,6 +268,10 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 				}
 			}
 
+			if !ans {
+				ans = network.checkCircleMaster(network.getNode(firstNode), secondNode)
+			}
+
 			attempts++
 		}
 

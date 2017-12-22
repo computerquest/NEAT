@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -33,6 +34,9 @@ func (n *Node) recieveInfluence() {
 		n.influence = 0
 		for i := 0; i < len(n.send); i++ {
 			if !n.send[i].disable {
+				if math.IsNaN(n.send[i].nodeTo.influence) || math.IsNaN(n.send[i].weight) {
+					fmt.Print("alert the master")
+				}
 				n.influence += n.send[i].nodeTo.influence * n.send[i].weight
 			}
 
@@ -95,10 +99,16 @@ func (n Node) netInput() float64 {
 	return sum
 }
 func (n *Node) setValue(i float64) {
+	if math.IsNaN(i) {
+		fmt.Print("alert the master")
+	}
 	n.value = i
 	n.signalValue()
 }
 func (n *Node) setInfluence(i float64) {
+	if math.IsNaN(i) {
+		fmt.Print("alert the master")
+	}
 	n.influence = i
 	n.signalInfluence()
 }

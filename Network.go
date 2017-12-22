@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 //100 NODE MAX!!!!!!!!!!!!!!!
@@ -50,6 +51,26 @@ func isRealNetwork(n *Network) bool {
 	return false
 }
 
+func printNetwork(n *Network) {
+	fmt.Println("network id: ", n.networkId, " species id: ", n.species)
+	fmt.Print("expected connection: ", n.innovation)
+	fmt.Println()
+
+	for b := 0; b < len(n.nodeList); b++ {
+		fmt.Print("node: ", n.nodeList[b].id, " sending: ")
+		for c := 0; c < len(n.nodeList[b].send); c++ {
+			fmt.Print(n.nodeList[b].send[c].nodeTo.id, " ")
+		}
+
+		fmt.Print("receive: ")
+		for c := 0; c < len(n.nodeList[b].receive); c++ {
+			fmt.Print(n.nodeList[b].receive[c].nodeFrom.id, " ")
+		}
+
+		fmt.Println()
+	}
+}
+
 ////////////////////////////////////////////////////////////RUNNING
 func (n *Network) Process(input []float64) []float64 {
 	for i := 0; i < len(n.input); i++ {
@@ -63,6 +84,42 @@ func (n *Network) Process(input []float64) []float64 {
 	ans := make([]float64, len(n.output))
 	for i := 0; i < len(n.output); i++ {
 		ans[i] = n.output[i].value
+	}
+
+	return ans
+}
+
+func (network *Network) checkCircleMaster(n *Node, goal int) bool {
+	preCheck := make([]int, len(network.nodeList))
+
+	for i := 0; i < len(preCheck); i++ {
+		preCheck[i] = i
+	}
+
+	return checkCircle(n, goal, preCheck)
+}
+
+//TODO: fix method so it does not depend on all ids for nodes being in order
+func checkCircle(n *Node, goal int, preCheck []int) bool {
+	ans := false
+	if n.id == goal {
+		return true
+	}
+
+	if preCheck[n.id] == -1 {
+		//return false
+	}
+
+	//checks for cirular dependency
+	for i := 0; i < len(n.receive); i++ {
+		ans = checkCircle(n.receive[i].nodeFrom, goal, preCheck)
+		if ans {
+			break
+		}
+	}
+
+	if !ans {
+		preCheck[n.id] = -1
 	}
 
 	return ans
@@ -83,6 +140,11 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 		derivative := sigmoidDerivative(n.nodeList[i].value)
 		for a := 0; a < len(n.nodeList[i].receive); a++ {
 			if n.nodeList[i].receive[a] != nil {
+				if math.IsNaN(derivative) || math.IsNaN(n.nodeList[i].receive[a].nodeFrom.value) || math.IsNaN(n.nodeList[i].influence) || math.IsNaN(n.nodeList[i].receive[a].nextWeight) || math.IsNaN(n.learningRate) {
+					fmt.Print(derivative, (n.nodeList[i].receive[a].nodeFrom.value), n.nodeList[i].influence, n.learningRate)
+					printNetwork(n)
+					fmt.Print("alert the master")
+				}
 				n.nodeList[i].receive[a].nextWeight += derivative * (n.nodeList[i].receive[a].nodeFrom.value) * n.nodeList[i].influence * n.learningRate
 			}
 		}
@@ -135,7 +197,7 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		for i := 0; i < len(n.nodeList); i++ {
 			for a := 0; a < len(n.nodeList[i].send); a++ {
 				if isRealConnection(&n.nodeList[i].send[a]) {
-					n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight
+					n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight / float64(len(input))
 				}
 			}
 		}
@@ -162,7 +224,7 @@ func (n *Network) addInnovation(num int) {
 	if len(n.innovation) >= cap(n.innovation) {
 		n.innovation = append(n.innovation, num)
 	} else {
-		n.innovation = n.innovation[0: len(n.innovation)+1]
+		n.innovation = n.innovation[0 : len(n.innovation)+1]
 		n.innovation[len(n.innovation)-1] = num
 	}
 }
@@ -210,7 +272,7 @@ func (n *Network) createNode(send int) *Node {
 	if len(n.nodeList) >= cap(n.nodeList) {
 		n.nodeList = append(n.nodeList, node)
 	} else {
-		n.nodeList = n.nodeList[0: len(n.nodeList)+1]
+		n.nodeList = n.nodeList[0 : len(n.nodeList)+1]
 		n.nodeList[len(n.nodeList)-1] = node
 	}
 
