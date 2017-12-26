@@ -38,7 +38,7 @@ func GetNeatInstance(numNetworks int, input int, output int) Neat {
 	}
 
 	for i := 0; i < len(n.network); i++ {
-		n.network[i] = GetNetworkInstance(input, output, i, 0, .1, true)
+		n.network[i] = GetNetworkInstance(input, output, i, 0, .5, true)
 	}
 
 	return n
@@ -247,7 +247,6 @@ func (n *Neat) checkSpecies() {
 	}
 }
 func (n *Neat) speciate(network *Network) {
-	fmt.Println("call ", network.networkId, " species: ", network.species)
 	values := make([]float64, len(n.species))
 
 	for i := 0; i < len(n.species); i++ {
@@ -277,8 +276,6 @@ func (n *Neat) speciate(network *Network) {
 		lastSpec := network.species
 		newSpec := n.createSpecies(n.network[networkIndex : networkIndex+1])
 
-		fmt.Println(1, " the new is a ", newSpec.id)
-
 		//remove from the old species
 		s := n.getSpecies(lastSpec)
 		if s != nil {
@@ -286,11 +283,9 @@ func (n *Neat) speciate(network *Network) {
 			s.removeNetwork(network.networkId)
 			for i := 0; i < len(s.network); i++ {
 				if s.network[i].networkId != network.networkId && s.network[i].species == s.id {
-					fmt.Println("checking network ", s.network[i].networkId, " from ", network.networkId)
 					//n.speciate(s.network[i]) //what if already under threshold and speciates rest of species
 					if compareGenome(len(s.network[i].nodeList), s.network[i].innovation, s.avgNode(), s.commonInnovation) > compareGenome(len(s.network[i].nodeList), s.network[i].innovation, newSpec.avgNode(), newSpec.commonInnovation) {
 						newSpec.addNetwork(s.network[i])
-						fmt.Println(2, "net ", s.network[i].networkId, " net was: ", s.id, " now is ", newSpec.id)
 						s.removeNetwork(s.network[i].networkId)
 						i--
 					}
@@ -309,17 +304,13 @@ func (n *Neat) speciate(network *Network) {
 			newSpec.removeNetwork(network.networkId)
 			n.getSpecies(bestSpec).addNetwork(network) //could be problem because index changes when make new species (maybe because should be added to the end)
 
-			fmt.Println(3, " now is a ", network.species)
-
 			n.removeSpecies(newSpec.id)
 		}
 	} else if network.species != bestSpec {
 		lastSpec := n.getSpecies(network.species)
 		n.getSpecies(bestSpec).addNetwork(network)
-		fmt.Println(4, " new spec ", network.species)
 
 		if lastSpec != nil {
-			fmt.Println(6, " was", lastSpec.id)
 			lastSpec.removeNetwork(network.networkId)
 
 			/*if len(spec.network) < 2 {
@@ -328,16 +319,11 @@ func (n *Neat) speciate(network *Network) {
 			}*/
 		}
 	}
-	fmt.Println("end ", network.networkId, " species ", network.species)
 
 	//delete after testing
 	stuff := 0
 	for i := 0; i < len(n.species); i++ {
 		stuff += len(n.species[i].network)
-	}
-
-	if stuff != 15 {
-		fmt.Print("bad")
 	}
 }
 func compareGenome(node int, innovation []int, nodeA int, innovationA []int) float64 {
@@ -421,7 +407,6 @@ func (n *Neat) removeSpecies(id int) {
 
 			n.species = append(n.species[:i], n.species[i+1:]...)
 			for a := 0; a < len(currentSpecies); a++ {
-				//fmt.Println("remove: ", currentSpecies[a].networkId, " from spec ", id)
 				if currentSpecies[a].species == id {
 					fmt.Println("remove: ", currentSpecies[a].networkId, " from spec ", id)
 					n.speciate(currentSpecies[a])

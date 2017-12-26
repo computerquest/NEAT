@@ -133,6 +133,8 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 	for i := 0; i < len(n.output); i++ {
 		n.output[i].setInfluence(n.output[i].value - desired[i])
 		error += n.output[i].value - desired[i]
+		//n.output[i].setInfluence(desired[i]-n.output[i].value)
+		//error += desired[i]-n.output[i].value
 	}
 
 	//actually adjusts the weights
@@ -173,12 +175,25 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 	}
 	}*/
 }
+
+func (n *Network) resetWeight() {
+	for i := 0; i < len(n.nodeList); i++ {
+		for a := 0; a < len(n.nodeList[i].send); a++ {
+			n.nodeList[i].send[a].randWeight()
+		}
+	}
+}
+
 func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 	errorChange := -1000.0 //will be percent of error
 
 	lastError := 1000.0
+
+	n.resetWeight()
+
 	strikes := 10
-	for z := 1; strikes > 0 && lastError > .00000000001 && z < lim; z++ {
+	//TODO: change for the error
+	for z := 1; strikes > 0 && z < lim && lastError > .000001; z++ {
 		currentError := 0.0
 		//resets all the next weights
 		for i := 0; i < len(n.nodeList); i++ {
@@ -190,15 +205,16 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		}
 
 		for i := 0; i < len(input); i++ {
-			currentError += n.BackProp(input[i][0], input[i][1])
+			currentError += math.Abs(n.BackProp(input[i][0], input[i][1]))
 		}
 
 		//updates all the
 		for i := 0; i < len(n.nodeList); i++ {
 			for a := 0; a < len(n.nodeList[i].send); a++ {
-				if isRealConnection(&n.nodeList[i].send[a]) {
-					n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight / float64(len(input))
+				if a == 0 && i == 1 && n.networkId == 0 {
+					//fmt.Println(z,n.nodeList[i].send[a].weight,n.nodeList[i].send[a].nextWeight / float64(len(input)))
 				}
+				n.nodeList[i].send[a].weight += n.nodeList[i].send[a].nextWeight / float64(len(input))
 			}
 		}
 
@@ -206,7 +222,6 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		fmt.Printf("Gen: %d Current Error: %f avg: %e change: %e percent change: %f", z, currentError, currentError/float64(len(input)), currentError-lastError, errorChange)
 		fmt.Println()
 		lastError = currentError
-
 		if errorChange > -.01 {
 			//strikes--
 		}
@@ -292,7 +307,9 @@ func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int)
 	//creates and modfies the connection to the toNode
 	for i := 0; i < len(toNode.receive); i++ {
 		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
-			toNode.receive[i] = newNode.addSendCon(GetConnectionInstance(newNode, toNode, innovationB))
+			c := GetConnectionInstance(newNode, toNode, innovationB)
+			c.weight = 1
+			toNode.receive[i] = newNode.addSendCon(c)
 		}
 	}
 	//todo find a better way?

@@ -318,7 +318,7 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 func (s *Species) trainNetworks(trainingSet [][][]float64) {
 	for i := 0; i < len(s.network); i++ {
 		if s.network[i] != nil {
-			s.network[i].trainSet(trainingSet, 500)
+			s.network[i].trainSet(trainingSet, 1000)
 		}
 	}
 }
@@ -367,6 +367,7 @@ func (s *Species) mateSpecies() []Network {
 		if numMade > 0 {
 			//TODO: change from arbitrary value
 			s.mutateSpecific(sortedNetwork[0], .3) //adds best network back in where the last child for that network
+			sortedNetwork[0].resetWeight()
 			newNets[len(newNets)-1] = *sortedNetwork[0]
 		}
 	}
