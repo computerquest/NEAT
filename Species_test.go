@@ -97,7 +97,3 @@ func TestRemoveNetwork(t *testing.T) {
 	}
 }
 
-//TODO: finish testing
-func TestMateSpecies(t *testing.T) {
-
-}

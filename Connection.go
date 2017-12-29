@@ -10,21 +10,13 @@ type Connection struct {
 	nextWeight float64
 	nodeTo     *Node
 	nodeFrom   *Node
-	inNumber   int //TODO: do i ever use?
+	innovation int
 }
 
 func (c *Connection) randWeight() {
 	c.weight = rand.Float64()*.2 + .4
 }
-func isRealConnection(c *Connection) bool {
-	if c.nodeFrom == nil {
-		return false
-	}
 
-	return true
-}
-
-//these act as the middle man between nodes
 func (c *Connection) notifyValue() {
 	if c.nodeTo != nil {
 		c.nodeTo.recieveValue()
@@ -38,7 +30,7 @@ func (c *Connection) notifyInfluence() {
 }
 
 func GetConnectionInstance(from *Node, to *Node, inNumber int) Connection {
-	c := Connection{weight: 0, disable: false, nextWeight: 0, nodeTo: to, nodeFrom: from, inNumber: inNumber}
+	c := Connection{weight: 0, disable: false, nextWeight: 0, nodeTo: to, nodeFrom: from, innovation: inNumber}
 	c.randWeight()
 
 	return c

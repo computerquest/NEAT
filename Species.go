@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"time"
+	//	"fmt"
 )
 
-//TODO: can expand number of possbile innovatoins by passing pointers to the slices
-//TODO: when passing back the new species networks to Neat make sure the pointers (in species) are updated as well
 type Species struct {
 	network             []*Network //holds the pointer to all the networks
 	connectionInnovaton []int      //holds number of occerences of each innovation
@@ -28,28 +26,6 @@ func GetSpeciesInstance(id int, networks []Network, innovations *[][]int) Specie
 
 	return s
 }
-func (s *Species) avgNode() int {
-	if len(s.network) == 0 {
-		return 0
-	}
-	sum := 0
-	for i := 0; i < len(s.network); i++ {
-		sum += len(s.network[i].nodeList)
-	}
-
-	return sum / len(s.network)
-}
-func isRealSpecies(s *Species) bool {
-	if cap(s.network) != 0 {
-		return true
-	}
-	return false
-}
-func (s *Species) sortInnovation() {
-	for i := 0; i < len(s.network); i++ {
-		sort.Ints(s.network[i].innovation)
-	}
-}
 
 ////////////////////////////////////////////////////////////INNOVATION
 func (s *Species) addCI(a int) {
@@ -62,7 +38,7 @@ func (s *Species) addCI(a int) {
 	if len(s.commonInnovation) >= cap(s.commonInnovation) {
 		s.commonInnovation = append(s.commonInnovation, a)
 	} else {
-		s.commonInnovation = s.commonInnovation[0 : len(s.commonInnovation)+1]
+		s.commonInnovation = s.commonInnovation[0: len(s.commonInnovation)+1]
 		s.commonInnovation[len(s.commonInnovation)-1] = a
 	}
 }
@@ -72,7 +48,6 @@ func (s *Species) removeCI(a int) {
 			s.commonInnovation = append(s.commonInnovation[:i], s.commonInnovation[i+1:]...)
 		}
 	}
-
 }
 func (s *Species) getInovOcc(i int) *int {
 	if i >= len(s.connectionInnovaton) {
@@ -116,9 +91,13 @@ func (s *Species) checkCI() {
 func (n *Species) getInnovationRef(num int) []int {
 	return (*n.innovationDict)[num]
 }
+func (s *Species) sortInnovation() {
+	for i := 0; i < len(s.network); i++ {
+		sort.Ints(s.network[i].innovation)
+	}
+}
 
 //////////////////////////////////////////////////////////////NETWORK
-//TODO: don't need
 func (s *Species) getNetworkAt(a int) *Network {
 	return s.network[a]
 }
@@ -149,7 +128,7 @@ func (s *Species) addNetwork(n *Network) {
 	if len(s.network) >= cap(s.network) {
 		s.network = append(s.network, n)
 	} else {
-		s.network = s.network[0 : len(s.network)+1]
+		s.network = s.network[0: len(s.network)+1]
 		s.network[len(s.network)-1] = n
 	}
 
@@ -184,20 +163,12 @@ func (s *Species) updateStereotype() {
 	}
 }
 func (n *Species) createNewInnovation(values []int) int {
-	if len(*n.innovationDict) >= cap(*n.innovationDict) {
-		fmt.Println("bad stuff")
-	} else {
-		*n.innovationDict = (*n.innovationDict)[0 : len(*n.innovationDict)+1]
-		(*n.innovationDict)[len(*n.innovationDict)-1] = values
-	}
+	*n.innovationDict = (*n.innovationDict)[0: len(*n.innovationDict)+1]
+	(*n.innovationDict)[len(*n.innovationDict)-1] = values
 
 	return len(*n.innovationDict) - 1
 }
-
-//TODO: change name
-//TODO: fix my lazyness
-//TODO: test/integrate
-func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
+func (s *Species) mutateNetwork(network *Network, nodeMutateA float64) {
 	nodeRange := len(network.nodeList)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -206,7 +177,7 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 		for i := 0; i < len((*s.innovationDict)); i++ {
 			if (*s.innovationDict)[i][1] == numTo && (*s.innovationDict)[i][0] == numFrom {
 				//network.addInnovation(i)
-				s.mutateNetwork(i)
+				s.incrementInov(i)
 
 				return i
 			}
@@ -216,7 +187,7 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 		num := s.createNewInnovation([]int{numFrom, numTo})
 
 		//network.addInnovation(num)
-		s.mutateNetwork(num)
+		s.incrementInov(num)
 
 		return num
 	}
@@ -234,8 +205,7 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 			}
 		}
 
-		test := int(rand.Float64() * float64(len(network.getNode(firstNode).send)))
-		secondNode = network.getNode(firstNode).send[test].nodeTo.id //int(r.Int63n(int64(nodeRange)))
+		secondNode = network.getNode(firstNode).send[int(rand.Float64()*float64(len(network.getNode(firstNode).send)))].nodeTo.id //int(r.Int63n(int64(nodeRange)))
 
 		network.mutateNode(firstNode, secondNode, addConnectionInnovation(firstNode, network.getNextNodeId()), addConnectionInnovation(network.getNextNodeId(), secondNode))
 	}
@@ -282,13 +252,6 @@ func (s *Species) mutateSpecific(network *Network, nodeMutateA float64) {
 		}
 	}
 }
-
-//TODO: delete or redo because really dont need this
-func (s *Species) mutateNetwork(innovate int) {
-	s.incrementInov(innovate)
-}
-
-//TODO: optimize
 func (n *Species) mateNetwork(nB Network, nA Network) Network {
 	ans := GetNetworkInstance(len(nB.output), len(nB.input)-1, 0, nB.species, nB.learningRate, false)
 
@@ -317,32 +280,38 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 }
 func (s *Species) trainNetworks(trainingSet [][][]float64) {
 	for i := 0; i < len(s.network); i++ {
-		if s.network[i] != nil {
-			s.network[i].trainSet(trainingSet, 1000)
-		}
+		s.network[i].trainSet(trainingSet, 1000)
 	}
 }
-
 //used to make networks inside a species
 func (s *Species) mateSpecies() []Network {
 	s.adjustFitness()
 
-	//TODO: not the most effiecent and do not need net adjusted fitness
 	//sorts by adjusted fitness
 	sortedNetwork := make([]*Network, len(s.network)*85/100)
 	lastValue := 1000.0
 	sumFitness := 0.0
-	for i := 0; i < len(sortedNetwork); i++ { //TODO: why
-		if s.getNetworkAt(i) == nil {
-			continue
-		}
-
+	for i := 0; i < len(sortedNetwork); i++ {
 		localMax := 0.0
 		localIndex := 0
 		for a := 0; a < len(s.network); a++ {
-			if s.getNetworkAt(a) != nil && s.getNetworkAt(a).adjustedFitness > localMax && s.getNetworkAt(a).adjustedFitness < lastValue {
-				localMax = s.network[a].adjustedFitness
-				localIndex = a
+			if s.getNetworkAt(a).adjustedFitness > localMax && s.getNetworkAt(a).adjustedFitness <= lastValue {
+				good := true
+				for b := i - 1; b >= 0; b-- {
+					if s.getNetworkAt(a).networkId == sortedNetwork[b].networkId {
+						good = false
+						break
+					}
+
+					if sortedNetwork[b].adjustedFitness != s.getNetworkAt(a).adjustedFitness {
+						break
+					}
+				}
+
+				if good {
+					localMax = s.network[a].adjustedFitness
+					localIndex = a
+				}
 			}
 		}
 
@@ -364,11 +333,17 @@ func (s *Species) mateSpecies() []Network {
 			}
 		}
 
-		if numMade > 0 {
-			//TODO: change from arbitrary value
-			s.mutateSpecific(sortedNetwork[0], .3) //adds best network back in where the last child for that network
-			sortedNetwork[0].resetWeight()
-			newNets[len(newNets)-1] = *sortedNetwork[0]
+	}
+
+	for i := 0; count < len(newNets); i++ {
+		//TODO: change from arbitrary value (mutation value)
+		s.mutateNetwork(sortedNetwork[i], .3) //adds best network back in where the last child for that network
+		sortedNetwork[i].resetWeight()
+		newNets[count] = *sortedNetwork[i]
+		count++
+
+		if i == len(sortedNetwork)-1 {
+			i-- //this can lead to mutating the same network as last time (stacking mutations) but i don't think it is a big deal
 		}
 	}
 
@@ -384,4 +359,15 @@ func (s *Species) adjustFitness() {
 	for i := 0; i < len(s.network); i++ {
 		s.network[i].adjustedFitness = s.network[i].fitness / float64(len(s.network))
 	}
+}
+func (s *Species) avgNode() int {
+	if len(s.network) == 0 {
+		return 0
+	}
+	sum := 0
+	for i := 0; i < len(s.network); i++ {
+		sum += len(s.network[i].nodeList)
+	}
+
+	return sum / len(s.network)
 }

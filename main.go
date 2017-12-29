@@ -2,81 +2,9 @@ package main
 
 import (
 	"fmt"
-	"math"
 )
 
 func main() {
-	//xor
-	/*data := [][][]float64{
-		{
-			{0, 1},
-			{1},
-		},
-		{
-			{1, 0},
-			{1},
-		},
-		{
-			{0, 0},
-			{0},
-		},
-		{
-			{1, 1},
-			{0},
-		},
-	}
-
-	dataA := [][][]float64{
-		{
-			{.05, .1},
-			{.01, .99},
-		},
-	}
-
-	cA := make(chan float64)
-	//dataA configuration
-	networkA := GetNetworkInstance(2, 2, 1, 1, .01)
-	networkA.mutateNode(2, 0, 10, 11)
-	networkA.mutateNode(2, 1, 10, 11)
-	networkA.mutateNode(3, 0, 12, 13)
-	networkA.mutateNode(3, 1, 12, 13)
-	stuff := func() {
-		networkA.trainSet(dataA, 10000)
-		cA <- 1
-	}
-	go stuff()
-
-	fmt.Println()
-
-	c := make(chan float64)
-
-	//data configuration
-	network := GetNetworkInstance(2, 1, 1, 1, .01)
-	network.mutateNode(2, 0, 10, 11)
-	network.mutateNode(1, 0, 12, 13)
-	network.mutateConnection(1, 4, 15)
-	network.mutateConnection(2, 3, 16)
-	stuffA := func() {
-		network.trainSet(data, 10000)
-		c <- 1
-	}
-	go stuffA()
-
-	<-cA
-	<-c
-
-	fmt.Println(networkA.Process(dataA[0][0]))
-	fmt.Println(network.Process(data[0][0]), network.Process(data[1][0]), network.Process(data[2][0]))
-
-	fmt.Print("works")*/
-
-	/*dataA := [][][]float64{
-		{
-			{.05, .1},
-			{.01, .99},
-		},
-	}*/
-
 	data := [][][]float64{
 		{
 			{0, 1},
@@ -97,30 +25,17 @@ func main() {
 	}
 
 	//for i := 0; i < 15; i++ {
-	neat := GetNeatInstance(15, 2, 1)
+	neat := GetNeatInstance(100, 2, 1)
 	neat.initialize()
-	globalError := 100000.0
 
-	for a := 100; a >= 0; a-- {
-		neat.start(data)
+	winner := neat.start(data, 20)
 
-		for i := 0; i < len(neat.network); i++ {
-			temp := math.Abs(data[0][1][0]-neat.network[i].Process(data[0][0])[0]) + math.Abs(data[1][1][0]-neat.network[i].Process(data[1][0])[0]) + math.Abs(data[2][1][0]-neat.network[i].Process(data[2][0])[0]) + math.Abs(data[3][1][0]-neat.network[i].Process(data[3][0])[0])
-			if temp < globalError {
-				fmt.Println("id: ", neat.network[i].networkId, "result: ", temp, neat.network[i].Process(data[0][0]), neat.network[i].Process(data[1][0]), neat.network[i].Process(data[2][0]), neat.network[i].Process(data[3][0]))
-				neat.printNeat()
-				globalError = temp
-			}
-		}
+	//neat.printNeat()
 
-		if a%5 == 0 {
-			neat.speciateAll()
-			neat.checkSpecies()
-		}
-	}
+	fmt.Println()
 
-	neat.printNeat()
-
-	//}
+	printNetwork(&winner)
+	fmt.Println("best ", winner.fitness, "error", 1/winner.fitness)
+	fmt.Println("result: ", winner.Process(data[0][0]), winner.Process(data[1][0]), winner.Process(data[2][0]), winner.Process(data[3][0])) //1 1 0 0
 	fmt.Println("finsihed")
 }

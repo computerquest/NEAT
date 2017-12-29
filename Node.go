@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"math"
 )
 
 //MAX 100 CONNECTIONS
 
-//TODO: can't give bias node connections because it is seen as an input and output in the classification methods
 type Node struct {
 	value             float64
 	id                int
@@ -23,7 +21,15 @@ func (n *Node) recieveValue() {
 	n.inputRecieved++
 
 	if n.inputRecieved == len(n.receive) {
-		n.setValue(sigmoid(n.netInput()))
+		sum := 0.0
+		for i := 0; i < len(n.receive); i++ {
+			c := n.receive[i]
+			if !c.disable {
+				sum += (c.nodeFrom.value) * c.weight
+			}
+		}
+
+		n.setValue(tanh(sum))
 		n.inputRecieved = 0
 	}
 }
@@ -34,27 +40,12 @@ func (n *Node) recieveInfluence() {
 		n.influence = 0
 		for i := 0; i < len(n.send); i++ {
 			if !n.send[i].disable {
-				if math.IsNaN(n.send[i].nodeTo.influence) || math.IsNaN(n.send[i].weight) {
-					fmt.Print("alert the master")
-				}
 				n.influence += n.send[i].nodeTo.influence * n.send[i].weight
 			}
 
 		}
 		n.setInfluence(n.influence)
 		n.influenceRecieved = 0
-	}
-}
-func (n *Node) signalValue() {
-	for i := 0; i < len(n.send); i++ {
-		n.send[i].notifyValue()
-	}
-}
-func (n *Node) signalInfluence() {
-	for i := 0; i < len(n.receive); i++ {
-		if n.receive[i] != nil {
-			n.receive[i].notifyInfluence()
-		}
 	}
 }
 
@@ -87,30 +78,28 @@ func (n *Node) getSendCon(i int) *Connection {
 }
 
 /////////////////////////////////////////////////PROCESS
-func (n Node) netInput() float64 {
-	var sum float64 = 0
-	for i := 0; i < len(n.receive); i++ {
-		c := n.receive[i]
-		if !c.disable {
-			sum += (c.nodeFrom.value) * c.weight
-		}
-	}
-
-	return sum
-}
 func (n *Node) setValue(i float64) {
-	if math.IsNaN(i) {
-		fmt.Print("alert the master")
-	}
 	n.value = i
-	n.signalValue()
+
+	for i := 0; i < len(n.send); i++ {
+		n.send[i].notifyValue()
+	}
 }
 func (n *Node) setInfluence(i float64) {
-	if math.IsNaN(i) {
-		fmt.Print("alert the master")
+	n.influence = i * tanhDerivative(n.value)
+	for i := 0; i < len(n.receive); i++ {
+		if n.receive[i] != nil {
+			n.receive[i].notifyInfluence()
+		}
 	}
-	n.influence = i
-	n.signalInfluence()
+}
+
+//////////////////////////////////////////////ACTIVATION
+func tanh(value float64) float64 {
+	return (math.Pow(2.71, value) - math.Pow(2.71, -1*value)) / (math.Pow(2.71, value) + math.Pow(2.71, -1*value))
+}
+func tanhDerivative(value float64) float64 {
+	return 1 - math.Pow(tanh(value), 2)
 }
 func sigmoid(value float64) float64 {
 	return 1 / (1 + (1 / math.Pow(2.71, value)))
@@ -119,7 +108,7 @@ func sigmoidDerivative(value float64) float64 {
 	return sigmoid(value) * (1 - sigmoid(value))
 }
 
-//TODO: do i need any of these node type methods
+///////////////////////////////////////TYPE
 func isInput(n *Node) bool {
 	if cap(n.receive) == 0 {
 		return true
@@ -129,14 +118,6 @@ func isInput(n *Node) bool {
 }
 func isOutput(n *Node) bool {
 	if cap(n.send) == 0 {
-		return true
-	}
-
-	return false
-}
-
-func isBias(n *Node) bool {
-	if len(n.send) == 0 {
 		return true
 	}
 
