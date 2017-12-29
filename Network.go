@@ -7,11 +7,9 @@ import (
 
 //100 NODE MAX!!!!!!!!!!!!!!!
 //NOTE most of the calculating work is networked by nodes inside the struct
-//TODO: change number of send connections allocated to something smaller or more specific
 type Network struct {
 	nodeList        []Node  //master list of nodes
 	innovation      []int   //list of inovation numbers this network has (SORTED)
-	id              int     //network id
 	learningRate    float64 //learning rate for backprop
 	output          []*Node //output nodes
 	input           []*Node //input nodes
@@ -22,7 +20,7 @@ type Network struct {
 }
 
 func GetNetworkInstance(input int, output int, id int, species int, learningRate float64, addCon bool) Network {
-	n := Network{networkId: id, id: 0, learningRate: learningRate, nodeList: make([]Node, 0, 100), output: make([]*Node, output), input: make([]*Node, input+1), species: species}
+	n := Network{networkId: id, learningRate: learningRate, nodeList: make([]Node, 0, 100), output: make([]*Node, output), input: make([]*Node, input+1), species: species}
 
 	//create output nodes
 	for i := 0; i < output; i++ {
@@ -230,8 +228,7 @@ func (n *Network) getNode(i int) *Node {
 	return &n.nodeList[i]
 }
 func (n *Network) createNode(send int) *Node {
-	node := Node{value: 0, influenceRecieved: 0, inputRecieved: 0, id: n.id, receive: make([]*Connection, 0, 0), send: make([]Connection, 0, send)}
-	n.id++
+	node := Node{value: 0, influenceRecieved: 0, inputRecieved: 0, id: len(n.nodeList), receive: make([]*Connection, 0, 0), send: make([]Connection, 0, send)}
 
 	if len(n.nodeList) >= cap(n.nodeList) {
 		n.nodeList = append(n.nodeList, node)
@@ -243,7 +240,7 @@ func (n *Network) createNode(send int) *Node {
 	return &n.nodeList[len(n.nodeList)-1]
 }
 func (n *Network) getNextNodeId() int {
-	return n.id
+	return len(n.nodeList)
 }
 func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int) int {
 	fromNode := n.getNode(from)

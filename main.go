@@ -24,11 +24,10 @@ func main() {
 		},
 	}
 
-	//for i := 0; i < 15; i++ {
-	neat := GetNeatInstance(100, 2, 1)
+	neat := GetNeatInstance(100, 2, 1, .3)
 	neat.initialize()
 
-	winner := neat.start(data, 20)
+	winner := neat.start(data, 20, 50)
 
 	//neat.printNeat()
 

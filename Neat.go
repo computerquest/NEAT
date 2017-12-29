@@ -6,29 +6,26 @@ import (
 	"math/rand"
 	"sort"
 	"time"
+	"sync"
 )
 
-//TODO: need to have start looped until completion
 //MAX 1000 innovation
 /*
 not going to speciate until after a couple of rounds
 */
 
 type Neat struct {
-	connectMutate        float64   //odds for connection mutation
 	nodeMutate           float64   //odds for node mutation
-	innovation           int       //number of innovations
 	network              []Network //stores networks in species
 	connectionInnovation [][]int   //stores innovation number and connection to and from ex: 1, fromNode:2, toNode: 5 [2,5]
 	speciesThreshold     float64   //could adjust based upon average difference between networks
-	networkId            int
 	species              []Species
 	speciesId            int
 }
 
-func GetNeatInstance(numNetworks int, input int, output int) Neat {
-	n := Neat{innovation: 0, connectMutate: .7, speciesThreshold: .01,
-		nodeMutate: .3, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
+func GetNeatInstance(numNetworks int, input int, output int, mutate float64) Neat {
+	n := Neat{speciesThreshold: .01,
+		nodeMutate: mutate, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
 
 	for i := output; i < input+output; i++ {
 		for a := 0; a < output; a++ {
@@ -56,16 +53,21 @@ func (n *Neat) initialize() {
 	n.speciateAll()
 	n.checkSpecies()
 }
-func (n *Neat) start(input [][][]float64, cutoff int) Network {
+
+func (n *Neat) start(input [][][]float64, cutoff int, target float64) Network {
 	strikes := cutoff
 	var bestNet Network
 	bestFit := 0.0
+	var wg sync.WaitGroup
 
 	for i := 0; i < len(n.species); i++ {
-		n.species[i].trainNetworks(input)
+		wg.Add(1)
+		go n.species[i].trainNetworks(input, &wg)
 	}
 
-	for z := 0; strikes > 0; z++ {
+	wg.Wait()
+
+	for z := 0; strikes > 0 && bestFit < target; z++ {
 		newOveral := make([]Network, len(n.network))
 		count := 0
 		for i := 0; i < len(n.species); i++ {
@@ -77,8 +79,17 @@ func (n *Neat) start(input [][][]float64, cutoff int) Network {
 		}
 
 		for i := 0; i < len(n.species); i++ {
-			n.species[i].trainNetworks(input)
+			wg.Add(1)
+			go n.species[i].trainNetworks(input, &wg)
 		}
+
+		//kind of innefficient but meh
+		if z%5 == 0 {
+			n.speciateAll()
+			n.checkSpecies()
+		}
+
+		wg.Wait()
 
 		bestIndex := -1
 		for i := 0; i < len(n.network); i++ {
@@ -99,11 +110,6 @@ func (n *Neat) start(input [][][]float64, cutoff int) Network {
 				n.speciateAll()
 				n.checkSpecies()
 			}
-		}
-
-		if z%5 == 0 {
-			n.speciateAll()
-			n.checkSpecies()
 		}
 
 		fmt.Println("epoch:", z)
@@ -134,12 +140,6 @@ func (n *Neat) mutatePopulation() {
 
 		n.species[species].mutateNetwork(n.species[species].getNetworkAt(int(r.Int63n(int64(len(n.species[species].network))))), n.nodeMutate)
 	}
-}
-func (n *Neat) createInnovation(values []int) int {
-	n.connectionInnovation = (n.connectionInnovation)[0: len(n.connectionInnovation)+1]
-	n.connectionInnovation[len(n.connectionInnovation)-1] = values
-
-	return len(n.connectionInnovation) - 1
 }
 
 /////////////////////////////////////////////////////////////SPECIATION
@@ -257,6 +257,12 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 
 	return float64(missing+int(math.Abs(float64(node-nodeA)))) / (float64(len(smaller)) + float64((node+nodeA)/2))
 }
+func (n *Neat) createInnovation(values []int) int {
+	n.connectionInnovation = (n.connectionInnovation)[0: len(n.connectionInnovation)+1]
+	n.connectionInnovation[len(n.connectionInnovation)-1] = values
+
+	return len(n.connectionInnovation) - 1
+}
 
 //////////////////////////////////////////////////////////INNOVATON
 func (n *Neat) getInnovation(num int) []int {
@@ -287,7 +293,7 @@ func (n *Neat) createSpecies(possible []Network) *Species {
 		possible[i].species = n.speciesId
 	}
 
-	s := GetSpeciesInstance(n.speciesId, possible, &n.connectionInnovation)
+	s := GetSpeciesInstance(n.speciesId, possible, &n.connectionInnovation, n.nodeMutate)
 	if cap(n.species) <= len(n.species) {
 		n.species = append(n.species, s)
 	} else {

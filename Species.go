@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 	//	"fmt"
+	"sync"
 )
 
 type Species struct {
@@ -13,10 +14,11 @@ type Species struct {
 	commonInnovation    []int      //common connection innovation numbers
 	innovationDict      *[][]int   //master list for all innovations
 	id                  int        //the identifier for the species
+	mutate              float64
 }
 
-func GetSpeciesInstance(id int, networks []Network, innovations *[][]int) Species {
-	s := Species{id: id, network: make([]*Network, len(networks)), commonInnovation: make([]int, 0, len(*innovations)*2), connectionInnovaton: make([]int, len(*innovations)*2), innovationDict: innovations}
+func GetSpeciesInstance(id int, networks []Network, innovations *[][]int, mutate float64) Species {
+	s := Species{mutate: mutate, id: id, network: make([]*Network, len(networks)), commonInnovation: make([]int, 0, len(*innovations)*2), connectionInnovaton: make([]int, len(*innovations)*2), innovationDict: innovations}
 
 	for i := 0; i < len(networks); i++ {
 		s.network[i] = &networks[i]
@@ -278,10 +280,11 @@ func (n *Species) mateNetwork(nB Network, nA Network) Network {
 
 	return ans
 }
-func (s *Species) trainNetworks(trainingSet [][][]float64) {
+func (s *Species) trainNetworks(trainingSet [][][]float64, control *sync.WaitGroup) {
 	for i := 0; i < len(s.network); i++ {
 		s.network[i].trainSet(trainingSet, 1000)
 	}
+	control.Done()
 }
 //used to make networks inside a species
 func (s *Species) mateSpecies() []Network {
@@ -336,8 +339,7 @@ func (s *Species) mateSpecies() []Network {
 	}
 
 	for i := 0; count < len(newNets); i++ {
-		//TODO: change from arbitrary value (mutation value)
-		s.mutateNetwork(sortedNetwork[i], .3) //adds best network back in where the last child for that network
+		s.mutateNetwork(sortedNetwork[i], s.mutate) //adds best network back in where the last child for that network
 		sortedNetwork[i].resetWeight()
 		newNets[count] = *sortedNetwork[i]
 		count++
