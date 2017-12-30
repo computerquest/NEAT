@@ -47,7 +47,7 @@ func (n *Neat) initialize() {
 
 	for i := 0; i < len(n.species); i++ {
 		for a := 0; a < len(n.species[i].network); a++ {
-			n.species[i].mutateNetwork(n.species[i].network[a], n.nodeMutate)
+			n.species[i].mutateNetwork(n.species[i].network[a])
 		}
 	}
 	n.speciateAll()
@@ -138,7 +138,7 @@ func (n *Neat) mutatePopulation() {
 	for i := 0; i < numNet; i++ {
 		species := int(r.Int63n(int64(len(n.species))))
 
-		n.species[species].mutateNetwork(n.species[species].getNetworkAt(int(r.Int63n(int64(len(n.species[species].network))))), n.nodeMutate)
+		n.species[species].mutateNetwork(n.species[species].getNetworkAt(int(r.Int63n(int64(len(n.species[species].network))))))
 	}
 }
 

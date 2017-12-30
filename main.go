@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
+	//XOR data seti
 	data := [][][]float64{
 		{
 			{0, 1},
@@ -24,7 +25,7 @@ func main() {
 		},
 	}
 
-	neat := GetNeatInstance(100, 2, 1, .3)
+	neat := GetNeatInstance(10, 2, 1, .3)
 	neat.initialize()
 
 	winner := neat.start(data, 20, 50)

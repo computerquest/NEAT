@@ -9,14 +9,14 @@ import (
 //NOTE most of the calculating work is networked by nodes inside the struct
 type Network struct {
 	nodeList        []Node  //master list of nodes
-	innovation      []int   //list of inovation numbers this network has (SORTED)
+	innovation      []int   //list of innovation numbers this network has (innovation number = unique connection)
 	learningRate    float64 //learning rate for backprop
 	output          []*Node //output nodes
 	input           []*Node //input nodes
-	fitness         float64
-	adjustedFitness float64
+	fitness         float64 //effectiveness of network (1/error)
+	adjustedFitness float64 //fitness relative to that in species
 	networkId       int
-	species         int
+	species         int //id of species
 }
 
 func GetNetworkInstance(input int, output int, id int, species int, learningRate float64, addCon bool) Network {
@@ -38,7 +38,7 @@ func GetNetworkInstance(input int, output int, id int, species int, learningRate
 			}
 		}
 	}
-	n.input[input] = n.createNode(100) //starts unconnected and will form connections over time
+	n.input[input] = n.createNode(100) //bias starts unconnected and will form connections over time
 
 	return n
 }
@@ -63,7 +63,9 @@ func printNetwork(n *Network) {
 }
 
 ////////////////////////////////////////////////////////////RUNNING
+//evaluate input returns values of output
 func (n *Network) Process(input []float64) []float64 {
+	//set input values
 	for i := 0; i < len(n.input); i++ {
 		if i < len(input) {
 			n.input[i].setValue(input[i])
@@ -72,6 +74,8 @@ func (n *Network) Process(input []float64) []float64 {
 		}
 	}
 
+	//values are calculated via connections and nodes signalling
+
 	ans := make([]float64, len(n.output))
 	for i := 0; i < len(n.output); i++ {
 		ans[i] = n.output[i].value
@@ -79,10 +83,12 @@ func (n *Network) Process(input []float64) []float64 {
 
 	return ans
 }
-func (n *Network) BackProp(input []float64, desired []float64) float64 {
-	n.Process(input) //need to do so that you are perfkorming the algorithm on that set of values
 
-	error := 0.0
+//trains network for input values against the desired values and returns the error
+func (n *Network) BackProp(input []float64, desired []float64) float64 {
+	n.Process(input) //set the values for the input
+
+	error := 0.0 //return value
 
 	//this will calc all the influence
 	for i := 0; i < len(n.output); i++ {
@@ -90,9 +96,10 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 		error += math.Abs(n.output[i].value - desired[i])
 	}
 
+	//all the influence is set the same way as values so it is set via connections and signalling
+
 	//actually adjusts the weights
 	for i := 0; i < len(n.nodeList); i++ {
-		//derivative := sigmoidDerivative(n.nodeList[i].value)
 		for a := 0; a < len(n.nodeList[i].receive); a++ {
 			if n.nodeList[i].receive[a] != nil {
 				if n.nodeList[i].receive[a].disable {
@@ -105,32 +112,37 @@ func (n *Network) BackProp(input []float64, desired []float64) float64 {
 
 	return error
 }
+
+//the handling function for training returns the fitness
 func (n *Network) trainSet(input [][][]float64, lim int) float64 {
-	errorChange := -1000.0 //will be percent of error
+	errorChange := -1000.0 //percent of error change
 	lastError := 1000.0
 
+	//initializes best weights
 	bestWeight := make([][]float64, len(n.nodeList))
 	for i := 0; i < len(n.nodeList); i++ {
 		bestWeight[i] = make([]float64, len(n.nodeList[i].send))
 	}
 
-	n.resetWeight()
+	n.resetWeight() //clears the current weight values
 
-	strikes := 10
+	strikes := 10 //number of times in a row that error can increase
 	for z := 1; strikes > 0 && z < lim && lastError > .000001; z++ {
 		currentError := 0.0
-		//resets all the next weights
+
+		//resets all the nextWeights
 		for i := 0; i < len(n.nodeList); i++ {
 			for a := 0; a < len(n.nodeList[i].send); a++ {
 				n.nodeList[i].send[a].nextWeight = 0
 			}
 		}
 
+		//trains each input
 		for i := 0; i < len(input); i++ {
 			currentError += n.BackProp(input[i][0], input[i][1])
 		}
 
-		//updates all the
+		//updates all the weight
 		for i := 0; i < len(n.nodeList); i++ {
 			for a := 0; a < len(n.nodeList[i].send); a++ {
 				if n.nodeList[i].send[a].disable {
@@ -142,6 +154,8 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 
 		errorChange = (currentError - lastError) / lastError
 		lastError = currentError
+
+		//decreases the number of strikes or resets them and changes best weight
 		if errorChange >= 0 {
 			strikes--
 		} else {
@@ -154,12 +168,14 @@ func (n *Network) trainSet(input [][][]float64, lim int) float64 {
 		}
 	}
 
+	//sets the weights back to the best
 	for i := 0; i < len(bestWeight); i++ {
 		for a := 0; a < len(bestWeight[i]); a++ {
 			n.nodeList[i].send[a].weight = bestWeight[i][a]
 		}
 	}
 
+	//calculate the final error
 	final := 0.0
 	for i := 0; i < len(input); i++ {
 		stuff := n.Process(input[i][0])
@@ -184,6 +200,8 @@ func (n *Network) addInnovation(num int) {
 		n.innovation[len(n.innovation)-1] = num
 	}
 }
+
+//returns in the networks returns a given innovation number
 func (n *Network) containsInnovation(num int) bool {
 	for i := 0; i < len(n.innovation); i++ {
 		if n.innovation[i] == num {
@@ -202,10 +220,13 @@ func (n *Network) removeInnovation(num int) {
 }
 
 /////////////////////////////////////////////////////////CONNECTION
+//adds a connection from from (node id) to to (node id) and adds innovation to the network
 func (n *Network) mutateConnection(from int, to int, innovation int) {
 	n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(from), n.getNode(to), innovation)))
 	n.addInnovation(innovation)
 }
+
+//returns the number of connections
 func (n *Network) numConnection() int {
 	ans := 0
 	for i := 0; i < len(n.nodeList); i++ {
@@ -214,6 +235,8 @@ func (n *Network) numConnection() int {
 
 	return ans
 }
+
+//resets a networks weights
 func (n *Network) resetWeight() {
 	for i := 0; i < len(n.nodeList); i++ {
 		for a := 0; a < len(n.nodeList[i].send); a++ {
@@ -222,11 +245,12 @@ func (n *Network) resetWeight() {
 		}
 	}
 }
-
 ///////////////////////////////////////////////////////NODE
 func (n *Network) getNode(i int) *Node {
 	return &n.nodeList[i]
 }
+
+//returns a pointer to node created with a cap of send (parameter) for send field in node (already added to nodeList)
 func (n *Network) createNode(send int) *Node {
 	node := Node{value: 0, influenceRecieved: 0, inputRecieved: 0, id: len(n.nodeList), receive: make([]*Connection, 0, 0), send: make([]Connection, 0, send)}
 
@@ -239,10 +263,25 @@ func (n *Network) createNode(send int) *Node {
 
 	return &n.nodeList[len(n.nodeList)-1]
 }
+
+//provides the id for the next node added
 func (n *Network) getNextNodeId() int {
 	return len(n.nodeList)
 }
+
+//adds a node in between from and to and adds the innovation numbers innovationA and innovationB and removes the original innovation number and returns the new node's id
 func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int) int {
+	{
+		sum := 0
+		sumA := 0
+		for i := 0; i < len(n.nodeList); i++ {
+			sum += len(n.nodeList[i].send)
+			sumA += len(n.nodeList[i].receive)
+		}
+		if sum != len(n.innovation) || sumA != len(n.innovation) {
+			fmt.Println("bad")
+		}
+	}
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
 	newNode := n.createNode(100)
@@ -250,15 +289,16 @@ func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int)
 	n.addInnovation(innovationA)
 	n.addInnovation(innovationB)
 
-	//creates and modfies the connection to the toNode
+	//changes the connection recieved by toNode to a connection sent by newNode
 	for i := 0; i < len(toNode.receive); i++ {
-		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom { //compares the memory location
+		if toNode.receive[i] != nil && fromNode == toNode.receive[i].nodeFrom {
 			n.removeInnovation(toNode.receive[i].innovation)
 			c := GetConnectionInstance(newNode, toNode, innovationB)
-			c.weight = 1
 			toNode.receive[i] = newNode.addSendCon(c)
 		}
 	}
+
+	//modifies the connection from fromNode by changing the toNode for the connection to newNode from toNode
 	for i := 0; i < len(fromNode.send); i++ {
 		if fromNode.send[i].nodeTo != nil && fromNode.send[i].nodeTo.id == toNode.id {
 			fromNode.send[i].nodeTo = newNode
@@ -268,10 +308,20 @@ func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int)
 		}
 	}
 
+	sum := 0
+	sumA := 0
+	for i := 0; i < len(n.nodeList); i++ {
+		sum += len(n.nodeList[i].send)
+		sumA += len(n.nodeList[i].receive)
+	}
+	if sum != len(n.innovation) || sumA != len(n.innovation) || len(n.nodeList)-1 < newNode.id {
+		fmt.Println("bad")
+	}
 	return newNode.id
 }
 
 ///////////////////////////////////////////////////////MISC
+//the handler for recursive checkCircle makes sure that there is no circular structure in the network returns if from node n there is some form of connection between node goal (id)
 func (network *Network) checkCircleMaster(n *Node, goal int) bool {
 	preCheck := make([]int, len(network.nodeList))
 
@@ -281,17 +331,20 @@ func (network *Network) checkCircleMaster(n *Node, goal int) bool {
 
 	return checkCircle(n, goal, preCheck)
 }
+
+//takes the node to check from, the target node, and a precheck to see if a node has already been checked for connection
 func checkCircle(n *Node, goal int, preCheck []int) bool {
 	ans := false
 	if n.id == goal {
 		return true
 	}
 
+	//checks for the precheck
 	if preCheck[n.id] == -1 {
 		return false
 	}
 
-	//checks for cirular dependency
+	//checks next stop down
 	for i := 0; i < len(n.receive); i++ {
 		ans = checkCircle(n.receive[i].nodeFrom, goal, preCheck)
 		if ans {
@@ -299,13 +352,17 @@ func checkCircle(n *Node, goal int, preCheck []int) bool {
 		}
 	}
 
+	//sets the precheck
 	if !ans {
 		preCheck[n.id] = -1
 	}
 
 	return ans
 }
+
+//takes n (network to clone) and in (master innovation list) and returns a duplicate of the network
 func clone(n *Network, in *[][]int) Network {
+	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
 	a := GetNetworkInstance(len(n.input)-1, len(n.output), n.networkId, n.species, n.learningRate, false)
 
 	for i := 0; i < len(n.nodeList)-len(n.input)-len(n.output); i++ {
@@ -318,6 +375,7 @@ func clone(n *Network, in *[][]int) Network {
 
 	for i := 0; i < len(a.nodeList); i++ {
 		for b := 0; b < len(a.nodeList[i].send); b++ {
+			//I have this because somehow every once in a while a network switched the order of a innovation added and didnt want to have to debug all that
 			if a.nodeList[i].send[b].innovation == n.nodeList[i].send[b].innovation {
 				a.nodeList[i].send[b].weight = n.nodeList[i].send[b].weight
 			} else {

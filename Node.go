@@ -9,7 +9,7 @@ import (
 type Node struct {
 	value             float64
 	id                int
-	receive           []*Connection //connections to this node
+	receive           []*Connection //pointer to connections sent to this node
 	send              []Connection  //connections sent from this node
 	influence         float64       //this nodes influence (used for backprop)
 	inputRecieved     int           //number of connections that have responded with input values
@@ -17,6 +17,7 @@ type Node struct {
 }
 
 /////////////////////////////////////////////PASS
+//recieves value from recieving connections and can set value when ready
 func (n *Node) recieveValue() {
 	n.inputRecieved++
 
@@ -33,6 +34,8 @@ func (n *Node) recieveValue() {
 		n.inputRecieved = 0
 	}
 }
+
+//recieves influence from sending connections and can set influence when ready
 func (n *Node) recieveInfluence() {
 	n.influenceRecieved++
 
@@ -54,7 +57,7 @@ func (n *Node) addSendCon(c Connection) *Connection {
 	if len(n.send) >= cap(n.send) {
 		n.send = append(n.send, c)
 	} else {
-		n.send = n.send[0 : len(n.send)+1]
+		n.send = n.send[0: len(n.send)+1]
 		n.send[len(n.send)-1] = c
 	}
 
@@ -64,7 +67,7 @@ func (n *Node) addRecCon(c *Connection) *Connection {
 	if len(n.receive) >= cap(n.receive) {
 		n.receive = append(n.receive, c)
 	} else {
-		n.receive = n.receive[0 : len(n.receive)+1]
+		n.receive = n.receive[0: len(n.receive)+1]
 		n.receive[len(n.receive)-1] = c
 	}
 
@@ -78,6 +81,7 @@ func (n *Node) getSendCon(i int) *Connection {
 }
 
 /////////////////////////////////////////////////PROCESS
+//sets value and signals to higher (send connection) nodes value is calculated
 func (n *Node) setValue(i float64) {
 	n.value = i
 
@@ -85,6 +89,8 @@ func (n *Node) setValue(i float64) {
 		n.send[i].notifyValue()
 	}
 }
+
+//sets influence and signals to lower (recieve connection) nodes influence is calculated
 func (n *Node) setInfluence(i float64) {
 	n.influence = i * tanhDerivative(n.value)
 	for i := 0; i < len(n.receive); i++ {
@@ -109,6 +115,7 @@ func sigmoidDerivative(value float64) float64 {
 }
 
 ///////////////////////////////////////TYPE
+//determines if a node is input (bias nodes will evaluate true)
 func isInput(n *Node) bool {
 	if cap(n.receive) == 0 {
 		return true
@@ -116,6 +123,8 @@ func isInput(n *Node) bool {
 
 	return false
 }
+
+//determines if output node
 func isOutput(n *Node) bool {
 	if cap(n.send) == 0 {
 		return true
