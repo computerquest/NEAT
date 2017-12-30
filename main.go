@@ -25,11 +25,13 @@ func main() {
 		},
 	}
 
-	neat := GetNeatInstance(10, 2, 1, .3)
-	neat.initialize()
+	var winner Network
+	for i := 0; i < 1000; i++ {
+		neat := GetNeatInstance(10, 2, 1, .3, .1)
+		neat.initialize()
 
-	winner := neat.start(data, 20, 50)
-
+		winner = neat.start(data, 20, 50)
+	}
 	//neat.printNeat()
 
 	fmt.Println()

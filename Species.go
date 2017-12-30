@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 	//	"fmt"
+
 	"sync"
-	"fmt"
 )
 
 type Species struct {
@@ -42,7 +42,7 @@ func (s *Species) addCI(a int) {
 	if len(s.commonInnovation) >= cap(s.commonInnovation) {
 		s.commonInnovation = append(s.commonInnovation, a)
 	} else {
-		s.commonInnovation = s.commonInnovation[0: len(s.commonInnovation)+1]
+		s.commonInnovation = s.commonInnovation[0 : len(s.commonInnovation)+1]
 		s.commonInnovation[len(s.commonInnovation)-1] = a
 	}
 }
@@ -101,10 +101,9 @@ func (n *Species) getInnovationRef(num int) []int {
 
 //adds all new innovation to innovationDict
 func (n *Species) createNewInnovation(values []int) int {
-	*n.innovationDict = (*n.innovationDict)[0: len(*n.innovationDict)+1]
+	*n.innovationDict = (*n.innovationDict)[0 : len(*n.innovationDict)+1]
 	(*n.innovationDict)[len(*n.innovationDict)-1] = values
 
-	fmt.Println("creating: ", len(*n.innovationDict)-1, values)
 	return len(*n.innovationDict) - 1
 }
 
@@ -146,7 +145,7 @@ func (s *Species) addNetwork(n *Network) {
 	if len(s.network) >= cap(s.network) {
 		s.network = append(s.network, n)
 	} else {
-		s.network = s.network[0: len(s.network)+1]
+		s.network = s.network[0 : len(s.network)+1]
 		s.network[len(s.network)-1] = n
 	}
 
@@ -182,17 +181,6 @@ func (s *Species) updateStereotype() {
 	}
 }
 func (s *Species) mutateNetwork(network *Network) {
-	{
-		sum := 0
-		sumA := 0
-		for i := 0; i < len(network.nodeList); i++ {
-			sum += len(network.nodeList[i].send)
-			sumA += len(network.nodeList[i].receive)
-		}
-		if sum != len(network.innovation) || sumA != len(network.innovation) {
-			fmt.Println("bad")
-		}
-	}
 	nodeRange := len(network.nodeList)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -201,7 +189,6 @@ func (s *Species) mutateNetwork(network *Network) {
 		//checks to see if preexisting innovation
 		for i := 0; i < len((*s.innovationDict)); i++ {
 			if (*s.innovationDict)[i][1] == numTo && (*s.innovationDict)[i][0] == numFrom {
-				//network.addInnovation(i)
 				s.incrementInov(i)
 
 				return i
@@ -211,7 +198,6 @@ func (s *Species) mutateNetwork(network *Network) {
 		//checks to see if needs to grow
 		num := s.createNewInnovation([]int{numFrom, numTo})
 
-		//network.addInnovation(num)
 		s.incrementInov(num)
 
 		return num
@@ -280,41 +266,8 @@ func (s *Species) mutateNetwork(network *Network) {
 			network.mutateConnection(firstNode, secondNode, addConnectionInnovation(firstNode, secondNode))
 		}
 	}
-	{
-		sum := 0
-		sumA := 0
-		for i := 0; i < len(network.nodeList); i++ {
-			sum += len(network.nodeList[i].send)
-			sumA += len(network.nodeList[i].receive)
-		}
-		if sum != len(network.innovation) || sumA != len(network.innovation) {
-			fmt.Println("bad")
-		}
-	}
 }
 func (s *Species) mateNetwork(nB Network, nA Network) Network {
-	{
-		sum := 0
-		sumA := 0
-		for i := 0; i < len(nA.nodeList); i++ {
-			sum += len(nA.nodeList[i].send)
-			sumA += len(nA.nodeList[i].receive)
-		}
-		if sum != len(nA.innovation) || sumA != len(nA.innovation) {
-			fmt.Println("bad")
-		}
-	}
-	{
-		sum := 0
-		sumA := 0
-		for i := 0; i < len(nB.nodeList); i++ {
-			sum += len(nB.nodeList[i].send)
-			sumA += len(nB.nodeList[i].receive)
-		}
-		if sum != len(nB.innovation) || sumA != len(nB.innovation) {
-			fmt.Println("bad")
-		}
-	}
 	ans := GetNetworkInstance(len(nB.input)-1, len(nB.output), 0, nB.species, nB.learningRate, false) //child
 
 	numNode := -1 * (len(nB.output) + len(nB.input)) //subtract input and output nodes because those are already created
@@ -331,35 +284,18 @@ func (s *Species) mateNetwork(nB Network, nA Network) Network {
 
 	//add nA innovation
 	for i := 0; i < len(nA.innovation); i++ {
-		fmt.Print(nA.innovation[i], " ")
 		ans.mutateConnection(s.getInnovationRef(nA.getInovation(i))[0], s.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
 	}
 
 	//add unique nB innovation
 	for i := 0; i < len(nB.innovation); i++ {
 		if !ans.containsInnovation(nB.innovation[i]) {
-			//works := true
 			firstNode := (*s.innovationDict)[nB.innovation[i]][0]
 			secondNode := (*s.innovationDict)[nB.innovation[i]][1]
-			/*for z := 0; z < len((*s.innovationDict)); z++ {
-
-				if ((*s.innovationDict)[z][1] == firstNode && (*s.innovationDict)[z][0] == secondNode) {
-					if ans.containsInnovation(z) {
-						works = false
-						break
-					}
-				}
-			}
-
-			if works && ans.checkCircleMaster(ans.getNode(firstNode), secondNode){
-				ans.mutateConnection(s.getInnovationRef(nB.getInovation(i))[0], s.getInnovationRef(nB.getInovation(i))[1], nB.getInovation(i))
-			} else {
-				continue
-			}*/
 
 			possible := false
 			for d := 0; d < len((*s.innovationDict)); d++ {
-				if ((*s.innovationDict)[d][1] == firstNode && (*s.innovationDict)[d][0] == secondNode) {
+				if (*s.innovationDict)[d][1] == firstNode && (*s.innovationDict)[d][0] == secondNode {
 					possible = ans.containsInnovation(d)
 					if possible {
 						break
@@ -368,31 +304,10 @@ func (s *Species) mateNetwork(nB Network, nA Network) Network {
 			}
 
 			if !possible && !ans.checkCircleMaster(ans.getNode(firstNode), secondNode) {
-				fmt.Print(nB.innovation[i], " ")
 				ans.mutateConnection(s.getInnovationRef(nB.getInovation(i))[0], s.getInnovationRef(nB.getInovation(i))[1], nB.getInovation(i))
 			}
 		}
 	}
-
-	//printNetwork(&nA)
-	//printNetwork(&nB)
-	//printNetwork(&ans)
-	fmt.Println()
-	fmt.Println(nA.innovation)
-	fmt.Println(nB.innovation)
-	fmt.Println(ans.innovation)
-	{
-		sum := 0
-		sumA := 0
-		for i := 0; i < len(ans.nodeList); i++ {
-			sum += len(ans.nodeList[i].send)
-			sumA += len(ans.nodeList[i].receive)
-		}
-		if sum != len(ans.innovation) || sumA != len(ans.innovation) {
-			fmt.Println("bad")
-		}
-	}
-	fmt.Println()
 
 	return ans
 }
@@ -406,7 +321,7 @@ func (s *Species) trainNetworks(trainingSet [][][]float64, control *sync.WaitGro
 }
 
 //used to make networks inside a species returns the new networks
-func (s *Species) mateSpecies() []Network {
+func (s *Species) mateSpecies(wg *sync.WaitGroup) {
 	s.adjustFitness()
 
 	//sorts by adjusted fitness
@@ -459,8 +374,9 @@ func (s *Species) mateSpecies() []Network {
 
 	//mutates for remainder of spots available
 	for i := 0; count < len(newNets); i++ {
-		s.mutateNetwork(sortedNetwork[i])
-		newNets[count] = *sortedNetwork[i]
+
+		newNets[count] = clone(sortedNetwork[i], s.innovationDict)
+		s.mutateNetwork(&newNets[count])
 		count++
 
 		if i == len(sortedNetwork)-1 {
@@ -471,15 +387,16 @@ func (s *Species) mateSpecies() []Network {
 	//sets the id
 	for i := 0; i < len(newNets); i++ {
 		newNets[i].networkId = s.network[i].networkId
+		*s.network[i] = newNets[i]
 	}
 
 	//set id at the same time for no confusion
 	for i := 0; i < len(s.network); i++ {
-		*s.network[i] = newNets[i]
 	}
+
 	s.updateStereotype()
 
-	return newNets
+	wg.Done()
 }
 
 //adjust networks fitness acording to the sum of the species

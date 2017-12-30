@@ -196,7 +196,7 @@ func (n *Network) addInnovation(num int) {
 	if len(n.innovation) >= cap(n.innovation) {
 		n.innovation = append(n.innovation, num)
 	} else {
-		n.innovation = n.innovation[0: len(n.innovation)+1]
+		n.innovation = n.innovation[0 : len(n.innovation)+1]
 		n.innovation[len(n.innovation)-1] = num
 	}
 }
@@ -222,8 +222,10 @@ func (n *Network) removeInnovation(num int) {
 /////////////////////////////////////////////////////////CONNECTION
 //adds a connection from from (node id) to to (node id) and adds innovation to the network
 func (n *Network) mutateConnection(from int, to int, innovation int) {
+
 	n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(from), n.getNode(to), innovation)))
 	n.addInnovation(innovation)
+
 }
 
 //returns the number of connections
@@ -245,6 +247,7 @@ func (n *Network) resetWeight() {
 		}
 	}
 }
+
 ///////////////////////////////////////////////////////NODE
 func (n *Network) getNode(i int) *Node {
 	return &n.nodeList[i]
@@ -257,7 +260,7 @@ func (n *Network) createNode(send int) *Node {
 	if len(n.nodeList) >= cap(n.nodeList) {
 		n.nodeList = append(n.nodeList, node)
 	} else {
-		n.nodeList = n.nodeList[0: len(n.nodeList)+1]
+		n.nodeList = n.nodeList[0 : len(n.nodeList)+1]
 		n.nodeList[len(n.nodeList)-1] = node
 	}
 
@@ -271,17 +274,7 @@ func (n *Network) getNextNodeId() int {
 
 //adds a node in between from and to and adds the innovation numbers innovationA and innovationB and removes the original innovation number and returns the new node's id
 func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int) int {
-	{
-		sum := 0
-		sumA := 0
-		for i := 0; i < len(n.nodeList); i++ {
-			sum += len(n.nodeList[i].send)
-			sumA += len(n.nodeList[i].receive)
-		}
-		if sum != len(n.innovation) || sumA != len(n.innovation) {
-			fmt.Println("bad")
-		}
-	}
+
 	fromNode := n.getNode(from)
 	toNode := n.getNode(to)
 	newNode := n.createNode(100)
@@ -308,15 +301,6 @@ func (n *Network) mutateNode(from int, to int, innovationA int, innovationB int)
 		}
 	}
 
-	sum := 0
-	sumA := 0
-	for i := 0; i < len(n.nodeList); i++ {
-		sum += len(n.nodeList[i].send)
-		sumA += len(n.nodeList[i].receive)
-	}
-	if sum != len(n.innovation) || sumA != len(n.innovation) || len(n.nodeList)-1 < newNode.id {
-		fmt.Println("bad")
-	}
 	return newNode.id
 }
 
@@ -362,6 +346,7 @@ func checkCircle(n *Node, goal int, preCheck []int) bool {
 
 //takes n (network to clone) and in (master innovation list) and returns a duplicate of the network
 func clone(n *Network, in *[][]int) Network {
+
 	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
 	a := GetNetworkInstance(len(n.input)-1, len(n.output), n.networkId, n.species, n.learningRate, false)
 
