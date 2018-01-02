@@ -57,7 +57,7 @@ func (n *Node) addSendCon(c Connection) *Connection {
 	if len(n.send) >= cap(n.send) {
 		n.send = append(n.send, c)
 	} else {
-		n.send = n.send[0: len(n.send)+1]
+		n.send = n.send[0 : len(n.send)+1]
 		n.send[len(n.send)-1] = c
 	}
 
@@ -67,7 +67,7 @@ func (n *Node) addRecCon(c *Connection) *Connection {
 	if len(n.receive) >= cap(n.receive) {
 		n.receive = append(n.receive, c)
 	} else {
-		n.receive = n.receive[0: len(n.receive)+1]
+		n.receive = n.receive[0 : len(n.receive)+1]
 		n.receive[len(n.receive)-1] = c
 	}
 
@@ -78,6 +78,17 @@ func (n *Node) getRecCon(i int) *Connection {
 }
 func (n *Node) getSendCon(i int) *Connection {
 	return &n.send[i]
+}
+
+//checks if node calling connects to a node with the id of id
+func (n *Node) connectsTo(id int) bool {
+	for i := 0; i < len(n.send); i++ {
+		if n.send[i].nodeTo.id == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 /////////////////////////////////////////////////PROCESS

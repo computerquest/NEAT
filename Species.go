@@ -18,6 +18,10 @@ type Species struct {
 	mutate              float64    //the odds for a node mutate (ie: .3)
 }
 
+var dictControl sync.Mutex //controls access to modifying the connection dictionary
+//var dictControlB sync.Mutex //controls access to reading the connection dictionary
+//var overall sync.Mutex      //controls access to reading the connection dictionary
+
 func GetSpeciesInstance(id int, networks []Network, innovations *[][]int, mutate float64) Species {
 	s := Species{mutate: mutate, id: id, network: make([]*Network, len(networks)), commonInnovation: make([]int, 0, len(*innovations)*2), connectionInnovaton: make([]int, len(*innovations)*2), innovationDict: innovations}
 
@@ -96,13 +100,27 @@ func (s *Species) checkCI() {
 
 //get innovation from innovationDict
 func (n *Species) getInnovationRef(num int) []int {
+	//overall.Lock()
+	//dictControlB.Lock()
+	//defer dictControlB.Unlock()
+	//defer overall.Unlock()
+	//dictControl.Lock()
+	//defer dictControl.Unlock()
 	return (*n.innovationDict)[num]
 }
 
 //adds all new innovation to innovationDict
 func (n *Species) createNewInnovation(values []int) int {
-	*n.innovationDict = (*n.innovationDict)[0 : len(*n.innovationDict)+1]
-	(*n.innovationDict)[len(*n.innovationDict)-1] = values
+	//overall.Lock()
+	dictControl.Lock()
+	if len(*n.innovationDict) == cap(*n.innovationDict) {
+		(*n.innovationDict) = append(*n.innovationDict, values)
+	} else {
+		*n.innovationDict = (*n.innovationDict)[0 : len(*n.innovationDict)+1]
+		(*n.innovationDict)[len(*n.innovationDict)-1] = values
+	}
+	defer dictControl.Unlock()
+	//defer overall.Unlock()
 
 	return len(*n.innovationDict) - 1
 }
@@ -187,8 +205,10 @@ func (s *Species) mutateNetwork(network *Network) {
 	//finds or adds innovation numbers and returns the innovation
 	addConnectionInnovation := func(numFrom int, numTo int) int {
 		//checks to see if preexisting innovation
-		for i := 0; i < len((*s.innovationDict)); i++ {
-			if (*s.innovationDict)[i][1] == numTo && (*s.innovationDict)[i][0] == numFrom {
+		maxPos := len(*s.innovationDict)
+		for i := 0; i < maxPos; i++ {
+			pos := s.getInnovationRef(i)
+			if pos[1] == numTo && pos[0] == numFrom {
 				s.incrementInov(i)
 
 				return i
@@ -230,11 +250,12 @@ func (s *Species) mutateNetwork(network *Network) {
 	} else {
 		var firstNode int
 		var secondNode int
-		ans := true
+		//ans := true
 		attempts := 0 //attempts at finding nodes
 
 		//find 2 unconnected nodes
-		for ans && attempts <= 10 {
+		//for ans && attempts <= 10 {
+		for attempts <= 10 {
 			firstNode = int(r.Int63n(int64(nodeRange)))
 			secondNode = int(r.Int63n(int64(nodeRange)))
 
@@ -242,21 +263,10 @@ func (s *Species) mutateNetwork(network *Network) {
 				continue
 			}
 
-			ans = false
-			for i := 0; i < len((*s.innovationDict)); i++ {
-				if ((*s.innovationDict)[i][0] == firstNode && (*s.innovationDict)[i][1] == secondNode) || ((*s.innovationDict)[i][1] == firstNode && (*s.innovationDict)[i][0] == secondNode) {
-					ans = network.containsInnovation(i)
-					if ans {
-						break
-					}
-				}
+			if network.getNode(firstNode).connectsTo(secondNode) || network.getNode(secondNode).connectsTo(firstNode) || network.checkCircleMaster(network.getNode(firstNode), secondNode) {
+				attempts++
+				continue
 			}
-
-			if !ans {
-				ans = network.checkCircleMaster(network.getNode(firstNode), secondNode)
-			}
-
-			attempts++
 		}
 
 		//muateNode if attempts exceeded else add the connection
@@ -284,28 +294,19 @@ func (s *Species) mateNetwork(nB Network, nA Network) Network {
 
 	//add nA innovation
 	for i := 0; i < len(nA.innovation); i++ {
-		ans.mutateConnection(s.getInnovationRef(nA.getInovation(i))[0], s.getInnovationRef(nA.getInovation(i))[1], nA.getInovation(i))
+		in := s.getInnovationRef(nA.getInovation(i))
+		ans.mutateConnection(in[0], in[1], nA.getInovation(i))
 	}
 
 	//add unique nB innovation
 	for i := 0; i < len(nB.innovation); i++ {
-		if !ans.containsInnovation(nB.innovation[i]) {
-			firstNode := (*s.innovationDict)[nB.innovation[i]][0]
-			secondNode := (*s.innovationDict)[nB.innovation[i]][1]
+		firstNode := (*s.innovationDict)[nB.innovation[i]][0]
+		secondNode := (*s.innovationDict)[nB.innovation[i]][1]
 
-			possible := false
-			for d := 0; d < len((*s.innovationDict)); d++ {
-				if (*s.innovationDict)[d][1] == firstNode && (*s.innovationDict)[d][0] == secondNode {
-					possible = ans.containsInnovation(d)
-					if possible {
-						break
-					}
-				}
-			}
-
-			if !possible && !ans.checkCircleMaster(ans.getNode(firstNode), secondNode) {
-				ans.mutateConnection(s.getInnovationRef(nB.getInovation(i))[0], s.getInnovationRef(nB.getInovation(i))[1], nB.getInovation(i))
-			}
+		//checks to make sure their is no conflict in possible innovations
+		if !ans.containsInnovation(nB.innovation[i]) && !(ans.getNode(firstNode).connectsTo(secondNode) || ans.getNode(secondNode).connectsTo(firstNode)) && !ans.checkCircleMaster(ans.getNode(firstNode), secondNode) {
+			in := s.getInnovationRef(nB.getInovation(i))
+			ans.mutateConnection(in[0], in[1], nB.getInovation(i))
 		}
 	}
 
@@ -315,7 +316,7 @@ func (s *Species) mateNetwork(nB Network, nA Network) Network {
 //trains networks and signals the waitgroup when done
 func (s *Species) trainNetworks(trainingSet [][][]float64, control *sync.WaitGroup) {
 	for i := 0; i < len(s.network); i++ {
-		s.network[i].trainSet(trainingSet, 1000)
+		s.network[i].trainSet(trainingSet, 10000) //I have capped the number of interations intentionaly to control training time
 	}
 	control.Done()
 }
@@ -374,8 +375,7 @@ func (s *Species) mateSpecies(wg *sync.WaitGroup) {
 
 	//mutates for remainder of spots available
 	for i := 0; count < len(newNets); i++ {
-
-		newNets[count] = clone(sortedNetwork[i], s.innovationDict)
+		newNets[count] = clone(sortedNetwork[i])
 		s.mutateNetwork(&newNets[count])
 		count++
 
@@ -388,10 +388,6 @@ func (s *Species) mateSpecies(wg *sync.WaitGroup) {
 	for i := 0; i < len(newNets); i++ {
 		newNets[i].networkId = s.network[i].networkId
 		*s.network[i] = newNets[i]
-	}
-
-	//set id at the same time for no confusion
-	for i := 0; i < len(s.network); i++ {
 	}
 
 	s.updateStereotype()

@@ -200,8 +200,6 @@ func (n *Network) addInnovation(num int) {
 		n.innovation[len(n.innovation)-1] = num
 	}
 }
-
-//returns in the networks returns a given innovation number
 func (n *Network) containsInnovation(num int) bool {
 	for i := 0; i < len(n.innovation); i++ {
 		if n.innovation[i] == num {
@@ -222,10 +220,8 @@ func (n *Network) removeInnovation(num int) {
 /////////////////////////////////////////////////////////CONNECTION
 //adds a connection from from (node id) to to (node id) and adds innovation to the network
 func (n *Network) mutateConnection(from int, to int, innovation int) {
-
 	n.getNode(to).addRecCon(n.getNode(from).addSendCon(GetConnectionInstance(n.getNode(from), n.getNode(to), innovation)))
 	n.addInnovation(innovation)
-
 }
 
 //returns the number of connections
@@ -345,35 +341,23 @@ func checkCircle(n *Node, goal int, preCheck []int) bool {
 }
 
 //takes n (network to clone) and in (master innovation list) and returns a duplicate of the network
-func clone(n *Network, in *[][]int) Network {
+func clone(n *Network) Network {
 
 	//need to totally reconstruct because otherwise the pointers in connections and such would be screwed up
-	a := GetNetworkInstance(len(n.input)-1, len(n.output), n.networkId, n.species, n.learningRate, false)
+	ans := GetNetworkInstance(len(n.input)-1, len(n.output), n.networkId, n.species, n.learningRate, false)
 
 	for i := 0; i < len(n.nodeList)-len(n.input)-len(n.output); i++ {
-		a.createNode(100)
+		ans.createNode(100)
 	}
 
-	for i := 0; i < len(n.innovation); i++ {
-		a.mutateConnection((*in)[n.getInovation(i)][0], (*in)[n.getInovation(i)][1], n.getInovation(i))
-	}
-
-	for i := 0; i < len(a.nodeList); i++ {
-		for b := 0; b < len(a.nodeList[i].send); b++ {
-			//I have this because somehow every once in a while a network switched the order of a innovation added and didnt want to have to debug all that
-			if a.nodeList[i].send[b].innovation == n.nodeList[i].send[b].innovation {
-				a.nodeList[i].send[b].weight = n.nodeList[i].send[b].weight
-			} else {
-				for c := 0; c < len(a.nodeList[i].send); c++ {
-					if a.nodeList[i].send[b].innovation == n.nodeList[i].send[c].innovation {
-						a.nodeList[i].send[b].weight = n.nodeList[i].send[c].weight
-					}
-				}
-			}
+	for i := 0; i < len(n.nodeList); i++ {
+		for a := 0; a < len(n.nodeList[i].send); a++ {
+			ans.mutateConnection(n.nodeList[i].send[a].nodeFrom.id, n.nodeList[i].send[a].nodeTo.id, n.nodeList[i].send[a].innovation)
+			ans.nodeList[i].send[a].weight = n.nodeList[i].send[a].weight
 		}
 	}
 
-	a.fitness = n.fitness
+	ans.fitness = n.fitness
 
-	return a
+	return ans
 }

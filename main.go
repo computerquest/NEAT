@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	//XOR data seti
+	//XOR data set
 	data := [][][]float64{
 		{
 			{0, 1},
@@ -26,12 +26,10 @@ func main() {
 	}
 
 	var winner Network
-	for i := 0; i < 1000; i++ {
-		neat := GetNeatInstance(10, 2, 1, .3, .1)
-		neat.initialize()
+	neat := GetNeatInstance(250, 2, 1, .3, .01)
+	neat.initialize()
 
-		winner = neat.start(data, 20, 50)
-	}
+	winner = neat.start(data, 100, 100000)
 	//neat.printNeat()
 
 	fmt.Println()

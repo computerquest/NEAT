@@ -25,11 +25,11 @@ type Neat struct {
 
 func GetNeatInstance(numNetworks int, input int, output int, mutate float64, lr float64) Neat {
 	n := Neat{speciesThreshold: .01,
-		nodeMutate: mutate, network: make([]Network, numNetworks), connectionInnovation: make([][]int, 0, 1000), species: make([]Species, 0, 5)}
+		nodeMutate: mutate, network: make([]Network, numNetworks), connectionInnovation: make([][]int, input*output, 1000), species: make([]Species, 0, 5)}
 
 	for i := output; i < input+output; i++ {
 		for a := 0; a < output; a++ {
-			n.createInnovation([]int{i, a})
+			n.connectionInnovation[(i-output)*output+a] = []int{i, a}
 		}
 	}
 
@@ -39,6 +39,8 @@ func GetNeatInstance(numNetworks int, input int, output int, mutate float64, lr 
 
 	return n
 }
+
+//this initializes all the species and mutates everything. this is a second method because the first does not return a reference.
 func (n *Neat) initialize() {
 	n.createSpecies(n.network[0 : len(n.network)%5+(len(n.network)/5)])
 	for i := len(n.network)%5 + (len(n.network) / 5); i+(len(n.network)/5) <= len(n.network); i += (len(n.network) / 5) {
@@ -54,12 +56,14 @@ func (n *Neat) initialize() {
 	n.checkSpecies()
 }
 
+//this is the actual neat training method. You provide the input, number of strikes, and the target accuracy
 func (n *Neat) start(input [][][]float64, cutoff int, target float64) Network {
 	strikes := cutoff
 	var bestNet Network
 	bestFit := 0.0
 	var wg sync.WaitGroup
 
+	//initial training
 	for i := 0; i < len(n.species); i++ {
 		wg.Add(1)
 		go n.species[i].trainNetworks(input, &wg)
@@ -68,6 +72,7 @@ func (n *Neat) start(input [][][]float64, cutoff int, target float64) Network {
 	wg.Wait()
 
 	for z := 0; strikes > 0 && bestFit < target; z++ {
+		//mates
 		for i := 0; i < len(n.species); i++ {
 			wg.Add(1)
 			go n.species[i].mateSpecies(&wg)
@@ -75,18 +80,19 @@ func (n *Neat) start(input [][][]float64, cutoff int, target float64) Network {
 
 		wg.Wait()
 
+		//trains
 		for i := 0; i < len(n.species); i++ {
 			wg.Add(1)
 			go n.species[i].trainNetworks(input, &wg)
 		}
+		wg.Wait()
 
 		if z%5 == 0 {
 			n.speciateAll()
 			n.checkSpecies()
 		}
 
-		wg.Wait()
-
+		//determines the best
 		bestIndex := -1
 		for i := 0; i < len(n.network); i++ {
 			if bestFit < n.network[i].fitness {
@@ -95,8 +101,9 @@ func (n *Neat) start(input [][][]float64, cutoff int, target float64) Network {
 			}
 		}
 
+		//compares the best
 		if bestIndex != -1 {
-			bestNet = clone(&n.network[bestIndex], &n.connectionInnovation)
+			bestNet = clone(&n.network[bestIndex])
 			strikes = cutoff
 		} else {
 			strikes--
@@ -107,7 +114,7 @@ func (n *Neat) start(input [][][]float64, cutoff int, target float64) Network {
 			}
 		}
 
-		fmt.Println("epoch:", z)
+		fmt.Println("epoch:", z, bestFit)
 	}
 
 	return bestNet
@@ -127,6 +134,8 @@ func (n *Neat) printNeat() {
 		}
 	}
 }
+
+//mutates part of the population
 func (n *Neat) mutatePopulation() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	numNet := int((r.Int63n(int64(len(n.network)))-3)/5) + 3
@@ -251,12 +260,6 @@ func compareGenome(node int, innovation []int, nodeA int, innovationA []int) flo
 	}
 
 	return float64(missing+int(math.Abs(float64(node-nodeA)))) / (float64(len(smaller)) + float64((node+nodeA)/2))
-}
-func (n *Neat) createInnovation(values []int) int {
-	n.connectionInnovation = (n.connectionInnovation)[0 : len(n.connectionInnovation)+1]
-	n.connectionInnovation[len(n.connectionInnovation)-1] = values
-
-	return len(n.connectionInnovation) - 1
 }
 
 //////////////////////////////////////////////////////////INNOVATON
