@@ -1,5 +1,3 @@
 # NEAT
 
-This is an implementation of the <a href="https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwiyl5ixrrPYAhVEKCYKHRwGAS8QFggpMAA&url=http%3A%2F%2Fnn.cs.utexas.edu%2Fdownloads%2Fpapers%2Fstanley.ec02.pdf&usg=AOvVaw0LTSukexmVEUSoZCpjZ9MW">NEAT algorithm</a> using Backpropogation.
-
-This program is a mix of genetic machine learning models (NEAT) and more traditional (backpropogation) models.
+This is an implimentation of NEAT (Neuroevolution of augmenting topologies) which is a genetic machine learning algorithm for my first project in Go. It works be creating really simple neural networks and then randomly mutating them and combining the most successfull networks via mating to spread their mutations across a species. There are species that divide the population to make sure that no one type of network dominates. In my specific implementation networks are also trained using backpropagation to discover their true potential at the cost of time. However, this could easily be changed to strictly follow the pure form. This has limitted multithreading, and needs to be tested further. This code is lesser than my c++ version.
